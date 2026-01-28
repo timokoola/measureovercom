@@ -305,7 +305,10 @@ export function MeasurementCanvas({
     } else if (isDrawing && currentLine) {
       e.preventDefault();
       // Apply snapping while drawing (only if enabled)
-      const snappedPos = snapToAxis(currentLine.start, pos, 5, snapEnabled);
+      // Use larger threshold for touch devices for easier snapping
+      const isTouch = 'touches' in e || 'changedTouches' in e;
+      const threshold = isTouch ? 12 : 8;
+      const snappedPos = snapToAxis(currentLine.start, pos, threshold, snapEnabled);
       setCurrentLine({ start: currentLine.start, end: snappedPos });
     } else if ((mode === 'move' || mode === 'delete') && !isMoving) {
       // Update hover state in move/delete mode
