@@ -90,14 +90,19 @@ export async function exportImageWithLines(
   // Draw scaled image to export canvas
   ctx.drawImage(tempCanvas, offsetX, offsetY, exportWidth, exportHeight);
 
-  // Draw grid if enabled (scaled to export dimensions)
+  // Draw grid if enabled (scaled to match original grid)
   if (gridSettings.enabled) {
     const isDarkMode = document.documentElement.classList.contains('dark');
-    const gridSpacing = calculateGridSpacing(exportWidth, exportHeight);
+    // Calculate grid spacing based on original image dimensions
+    const originalGridSpacing = calculateGridSpacing(image.width, image.height);
+    // Scale the grid spacing proportionally - use average scale to maintain grid appearance
+    // This ensures the grid lines align with the scaled image
+    const scaleFactor = (scaleX + scaleY) / 2;
+    const scaledGridSpacing = originalGridSpacing * scaleFactor;
     // Draw grid only over the image area
     ctx.save();
     ctx.translate(offsetX, offsetY);
-    drawGrid(ctx, exportWidth, exportHeight, gridSpacing, gridSettings.opacity, isDarkMode);
+    drawGrid(ctx, exportWidth, exportHeight, scaledGridSpacing, gridSettings.opacity, isDarkMode);
     ctx.restore();
   }
 

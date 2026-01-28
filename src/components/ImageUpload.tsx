@@ -1,4 +1,5 @@
-import { useRef, useState } from 'preact/hooks';
+import { useRef, useState, useEffect } from 'preact/hooks';
+import { t, getLanguage } from '../utils/i18n';
 
 interface ImageUploadProps {
   onImageLoad: (image: HTMLImageElement) => void;
@@ -7,6 +8,15 @@ interface ImageUploadProps {
 export function ImageUpload({ onImageLoad }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [lang, setLang] = useState(getLanguage());
+
+  useEffect(() => {
+    const handleLangChange = () => {
+      setLang(getLanguage());
+    };
+    window.addEventListener('languagechange', handleLangChange);
+    return () => window.removeEventListener('languagechange', handleLangChange);
+  }, []);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -88,10 +98,10 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
         </svg>
       </div>
       <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-        Upload an Image
+        {t('uploadImage')}
       </h2>
       <p class="text-gray-600 dark:text-gray-400 mb-6">
-        Drag and drop your image here, or click the button below
+        {t('dragDropOrClick')}
       </p>
       <button
         onClick={() => fileInputRef.current?.click()}
@@ -110,7 +120,7 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
             d="M12 4v16m8-8H4"
           />
         </svg>
-        Choose File
+        {t('selectImage')}
       </button>
     </div>
   );

@@ -7,6 +7,7 @@ import { CoordinateDisplay } from './CoordinateDisplay';
 import { GridControls } from './GridControls';
 import { UnitSelector } from './UnitSelector';
 import { ProjectManager } from './ProjectManager';
+import { LanguageSelector } from './LanguageSelector';
 import { ThemeToggle } from './ThemeToggle';
 import type {
   PaperSize,
@@ -21,6 +22,7 @@ import { getStoredTheme, applyTheme } from '../utils/theme';
 import { UndoRedoManager } from '../utils/undoRedo';
 import { saveProject, getStoredProjects, loadProject, deleteProject } from '../utils/projectStorage';
 import { exportImageWithLines, downloadImage } from '../utils/imageExport';
+import { t, getLanguage } from '../utils/i18n';
 
 export function MeasurementApp() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -50,6 +52,16 @@ export function MeasurementApp() {
   const undoRedoRef = useRef(new UndoRedoManager());
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [lang, setLang] = useState(getLanguage());
+
+  // Listen for language changes
+  useEffect(() => {
+    const handleLangChange = () => {
+      setLang(getLanguage());
+    };
+    window.addEventListener('languagechange', handleLangChange);
+    return () => window.removeEventListener('languagechange', handleLangChange);
+  }, []);
 
   useEffect(() => {
     // Apply theme on mount
@@ -106,7 +118,7 @@ export function MeasurementApp() {
       timestamp: Date.now(),
     };
     const id = saveProject(projectData);
-    alert('Project saved successfully!');
+    alert(t('projectSaved'));
   };
 
   const handleLoadProject = (projectId: string) => {
@@ -131,7 +143,7 @@ export function MeasurementApp() {
       const paperName = paperSize.replace('-', '_');
       downloadImage(dataUrl, `measureover-${paperName}-${Date.now()}.png`);
     } catch (error) {
-      alert('Failed to export image');
+      alert(t('exportImage') + ' - ' + (error instanceof Error ? error.message : 'Error'));
       console.error(error);
     }
   };
@@ -152,19 +164,19 @@ export function MeasurementApp() {
   }, [canUndo, canRedo]);
 
   return (
-    <div class="min-h-screen bg-gradient-to-br from-broken-white via-white to-gray-50 dark:from-dark-bg dark:via-dark-surface dark:to-dark-bg">
-      <div class="p-4 md:p-8">
+    <div class="min-h-screen bg-gradient-to-br from-broken-white via-white to-gray-50 dark:from-dark-bg dark:via-dark-surface dark:to-dark-bg flex flex-col">
+      <div class="p-4 md:p-8 flex-1">
         <header class="max-w-7xl mx-auto mb-12">
           <div class="flex justify-between items-start mb-4">
             <div>
               <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
-                MeasureOver
+                {t('appName')}
               </h1>
-              <p class="text-base text-gray-600 dark:text-gray-400">
-                Professional image measurement tool for drawing guidance
-              </p>
             </div>
-            <ThemeToggle />
+            <div class="flex items-center gap-3">
+              <LanguageSelector />
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
@@ -192,43 +204,43 @@ export function MeasurementApp() {
                       onClick={handleUndo}
                       disabled={!canUndo}
                       class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Undo (Ctrl+Z)"
+                      aria-label={`${t('undo')} (Ctrl+Z)`}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                       </svg>
-                      Undo
+                      {t('undo')}
                     </button>
                     <button
                       onClick={handleRedo}
                       disabled={!canRedo}
                       class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Redo (Ctrl+Y)"
+                      aria-label={`${t('redo')} (Ctrl+Y)`}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
                       </svg>
-                      Redo
+                      {t('redo')}
                     </button>
                     <button
                       onClick={handleExportImage}
                       class="inline-flex items-center gap-2 px-4 py-2 bg-burnt-orange text-white font-medium rounded-lg shadow-sm hover:bg-[#b84a00] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all"
-                      aria-label="Export image with lines"
+                      aria-label={t('exportImage')}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4 4v12" />
                       </svg>
-                      Export Image
+                      {t('exportImage')}
                     </button>
                     <button
                       onClick={() => setImage(null)}
                       class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all"
-                      aria-label="Upload a different image"
+                      aria-label={t('newImage')}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                       </svg>
-                      New Image
+                      {t('newImage')}
                     </button>
                   </div>
                 </div>
@@ -263,10 +275,11 @@ export function MeasurementApp() {
           )}
         </main>
 
-        <footer class="max-w-7xl mx-auto mt-16 pt-8 border-t border-gray-200 dark:border-gray-800">
-          <p class="text-sm text-center text-gray-500 dark:text-gray-500">
-            MeasureOver - Fast, lightweight image measurement tool
-          </p>
+        <footer class="max-w-7xl mx-auto mt-16 pt-8 pb-8 border-t border-gray-200 dark:border-gray-800">
+          <div class="flex flex-col items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
+            <p>{t('tagline')}</p>
+            <p class="text-xs">© 2026 Timo Koola. All rights reserved.</p>
+          </div>
         </footer>
       </div>
     </div>
