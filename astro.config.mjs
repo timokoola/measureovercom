@@ -7,7 +7,7 @@ export default defineConfig({
   integrations: [
     preact(),
     tailwind({
-      applyBaseStyles: false,
+      applyBaseStyles: true,
     }),
   ],
   output: 'static',

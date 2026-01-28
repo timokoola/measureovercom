@@ -57,10 +57,10 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      class={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+      class={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
         dragActive
-          ? 'border-burnt-orange bg-burnt-orange/10'
-          : 'border-gray-300 dark:border-gray-600'
+          ? 'border-burnt-orange bg-burnt-orange/5 shadow-lg scale-[1.02]'
+          : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-surface shadow-sm hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600'
       }`}
     >
       <input
@@ -71,13 +71,45 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
         class="hidden"
         aria-label="Upload image file"
       />
-      <p class="text-gray-700 dark:text-gray-300 mb-4">
-        Drag and drop an image here, or
+      <div class="mb-6">
+        <svg
+          class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      </div>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        Upload an Image
+      </h2>
+      <p class="text-gray-600 dark:text-gray-400 mb-6">
+        Drag and drop your image here, or click the button below
       </p>
       <button
         onClick={() => fileInputRef.current?.click()}
-        class="px-4 py-2 bg-burnt-orange text-white rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-burnt-orange text-white font-medium rounded-lg shadow-sm hover:bg-[#b84a00] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all duration-200"
       >
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
         Choose File
       </button>
     </div>

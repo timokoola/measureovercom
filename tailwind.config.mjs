@@ -6,7 +6,10 @@ export default {
     extend: {
       colors: {
         'broken-white': '#f5f5f0',
-        'burnt-orange': '#cc5500',
+        'burnt-orange': {
+          DEFAULT: '#cc5500',
+          hover: '#b84a00',
+        },
         'dark-bg': '#1a1a1a',
         'dark-surface': '#2a2a2a',
       },

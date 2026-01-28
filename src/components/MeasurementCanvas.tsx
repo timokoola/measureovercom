@@ -171,29 +171,117 @@ export function MeasurementCanvas({
 
   return (
     <div class="relative" role="region" aria-label="Measurement canvas">
-      <canvas
-        ref={canvasRef}
-        onMouseDown={handleStart}
-        onMouseMove={handleMove}
-        onMouseUp={handleEnd}
-        onMouseLeave={handleEnd}
-        onTouchStart={handleStart}
-        onTouchMove={handleMove}
-        onTouchEnd={handleEnd}
-        class="max-w-full h-auto border border-gray-300 dark:border-gray-600 rounded-lg cursor-crosshair focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2"
-        style={{ touchAction: 'none' }}
-        tabIndex={0}
-        aria-label="Measurement canvas - draw lines by clicking and dragging. Press Escape to clear all lines."
-      />
-      {lines.length > 0 && (
-        <button
-          onClick={clearLines}
-          class="absolute top-2 right-2 px-3 py-1 bg-burnt-orange text-white rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 text-sm"
-          aria-label="Clear all lines (or press Escape)"
-        >
-          Clear Lines
-        </button>
-      )}
+      {/* Drawing Toolbar */}
+      <div class="mb-4 bg-white dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-burnt-orange/10 dark:bg-burnt-orange/20">
+              <svg
+                class="w-5 h-5 text-burnt-orange"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Drawing Tool
+              </h3>
+              <p class="text-xs text-gray-600 dark:text-gray-400">
+                Click and drag on the image to draw measurement lines
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            {lines.length > 0 && (
+              <>
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                  {lines.length} {lines.length === 1 ? 'line' : 'lines'}
+                </span>
+                <button
+                  onClick={clearLines}
+                  class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-red-300 dark:hover:border-red-700 hover:text-red-600 dark:hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm font-medium transition-all"
+                  aria-label="Clear all lines"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  Clear All
+                </button>
+              </>
+            )}
+            {isDrawing && (
+              <div class="flex items-center gap-2 px-3 py-1.5 bg-burnt-orange/10 dark:bg-burnt-orange/20 rounded-md">
+                <div class="w-2 h-2 bg-burnt-orange rounded-full animate-pulse"></div>
+                <span class="text-xs font-medium text-burnt-orange">Drawing...</span>
+              </div>
+            )}
+          </div>
+        </div>
+        {lines.length === 0 && (
+          <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+            <div class="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
+              <svg
+                class="w-4 h-4 mt-0.5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div>
+                <p class="font-medium mb-1">How to draw:</p>
+                <ul class="list-disc list-inside space-y-0.5 ml-2">
+                  <li>Click and hold on the image where you want to start a line</li>
+                  <li>Drag to where you want the line to end</li>
+                  <li>Release to complete the line</li>
+                  <li>Intersection points will appear automatically</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Canvas Container */}
+      <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-800 p-4 overflow-hidden hover:border-burnt-orange/50 dark:hover:border-burnt-orange/50 transition-colors">
+        <canvas
+          ref={canvasRef}
+          onMouseDown={handleStart}
+          onMouseMove={handleMove}
+          onMouseUp={handleEnd}
+          onMouseLeave={handleEnd}
+          onTouchStart={handleStart}
+          onTouchMove={handleMove}
+          onTouchEnd={handleEnd}
+          class="max-w-full h-auto rounded-lg cursor-crosshair focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all"
+          style={{ touchAction: 'none' }}
+          tabIndex={0}
+          aria-label="Measurement canvas - draw lines by clicking and dragging. Press Escape to clear all lines."
+        />
+      </div>
       <div class="sr-only" aria-live="polite" aria-atomic="true">
         {lines.length === 0
           ? 'No lines drawn'

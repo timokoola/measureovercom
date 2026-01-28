@@ -37,14 +37,16 @@ export function ThemeToggle() {
       <button
         onClick={toggleMode}
         aria-label={`Switch to ${theme.mode === 'light' ? 'dark' : 'light'} mode`}
-        class="px-3 py-2 rounded-md bg-burnt-orange text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-colors"
+        class="p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-gray-400 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all shadow-sm hover:shadow-md"
+        title={`Switch to ${theme.mode === 'light' ? 'dark' : 'light'} mode`}
       >
         {theme.mode === 'light' ? '🌙' : '☀️'}
       </button>
       <button
         onClick={toggleColor}
         aria-label={`Switch to ${theme.color === 'default' ? 'high contrast' : 'default'} color mode`}
-        class="px-3 py-2 rounded-md bg-burnt-orange text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-colors"
+        class="p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-gray-400 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all shadow-sm hover:shadow-md"
+        title={`Switch to ${theme.color === 'default' ? 'high contrast' : 'default'} color mode`}
       >
         {theme.color === 'default' ? '🎨' : '🌈'}
       </button>

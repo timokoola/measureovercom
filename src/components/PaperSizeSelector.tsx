@@ -14,10 +14,10 @@ const PAPER_LABELS: Record<PaperSize, string> = {
 
 export function PaperSizeSelector({ value, onChange }: PaperSizeSelectorProps) {
   return (
-    <div class="flex flex-col gap-2">
+    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
       <label
         for="paper-size"
-        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+        class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3"
       >
         Paper Size
       </label>
@@ -25,7 +25,7 @@ export function PaperSizeSelector({ value, onChange }: PaperSizeSelectorProps) {
         id="paper-size"
         value={value}
         onChange={(e) => onChange(e.currentTarget.value as PaperSize)}
-        class="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:border-transparent"
+        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:border-transparent transition-all shadow-sm hover:shadow-md"
         aria-label="Select paper size for coordinate scaling"
         aria-describedby="paper-size-description"
       >

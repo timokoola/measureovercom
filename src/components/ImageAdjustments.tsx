@@ -36,65 +36,77 @@ export function ImageAdjustments({
   );
 
   return (
-    <div class="flex flex-col gap-4 p-4 bg-broken-white dark:bg-dark-surface rounded-lg">
-      <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Image Adjustments
       </h3>
 
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={adjustments.grayscale}
-          onChange={(e) =>
-            updateAdjustment('grayscale', e.currentTarget.checked)
-          }
-          class="w-4 h-4 text-burnt-orange focus:ring-burnt-orange rounded"
-        />
-        <span class="text-sm text-gray-700 dark:text-gray-300">
-          Grayscale
-        </span>
-      </label>
-
-      <div class="flex flex-col gap-2">
-        <label
-          for="brightness"
-          class="text-sm text-gray-700 dark:text-gray-300"
-        >
-          Brightness: {adjustments.brightness}%
+      <div class="space-y-5">
+        <label class="flex items-center gap-3 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={adjustments.grayscale}
+            onChange={(e) =>
+              updateAdjustment('grayscale', e.currentTarget.checked)
+            }
+            class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded border-gray-300 dark:border-gray-600"
+          />
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
+            Grayscale
+          </span>
         </label>
-        <input
-          id="brightness"
-          type="range"
-          min="0"
-          max="200"
-          value={adjustments.brightness}
-          onInput={(e) =>
-            updateAdjustment('brightness', parseInt(e.currentTarget.value), false)
-          }
-          class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange"
-          aria-label="Adjust brightness"
-        />
-      </div>
 
-      <div class="flex flex-col gap-2">
-        <label
-          for="contrast"
-          class="text-sm text-gray-700 dark:text-gray-300"
-        >
-          Contrast: {adjustments.contrast}%
-        </label>
-        <input
-          id="contrast"
-          type="range"
-          min="0"
-          max="200"
-          value={adjustments.contrast}
-          onInput={(e) =>
-            updateAdjustment('contrast', parseInt(e.currentTarget.value), false)
-          }
-          class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange"
-          aria-label="Adjust contrast"
-        />
+        <div class="flex flex-col gap-3">
+          <div class="flex justify-between items-center">
+            <label
+              for="brightness"
+              class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Brightness
+            </label>
+            <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
+              {adjustments.brightness}%
+            </span>
+          </div>
+          <input
+            id="brightness"
+            type="range"
+            min="0"
+            max="200"
+            value={adjustments.brightness}
+            onInput={(e) =>
+              updateAdjustment('brightness', parseInt(e.currentTarget.value), false)
+            }
+            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+            aria-label="Adjust brightness"
+          />
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="flex justify-between items-center">
+            <label
+              for="contrast"
+              class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Contrast
+            </label>
+            <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
+              {adjustments.contrast}%
+            </span>
+          </div>
+          <input
+            id="contrast"
+            type="range"
+            min="0"
+            max="200"
+            value={adjustments.contrast}
+            onInput={(e) =>
+              updateAdjustment('contrast', parseInt(e.currentTarget.value), false)
+            }
+            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+            aria-label="Adjust contrast"
+          />
+        </div>
       </div>
     </div>
   );
