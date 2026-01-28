@@ -4,11 +4,13 @@ import { MeasurementCanvas } from './MeasurementCanvas';
 import { PaperSizeSelector } from './PaperSizeSelector';
 import { ImageAdjustments } from './ImageAdjustments';
 import { CoordinateDisplay } from './CoordinateDisplay';
+import { GridControls } from './GridControls';
 import { ThemeToggle } from './ThemeToggle';
 import type {
   PaperSize,
   ImageAdjustments as ImageAdjustmentsType,
   Point,
+  GridSettings,
 } from '../types';
 import { getStoredTheme, applyTheme } from '../utils/theme';
 
@@ -19,6 +21,11 @@ export function MeasurementApp() {
     grayscale: false,
     brightness: 100,
     contrast: 100,
+  });
+  const [gridSettings, setGridSettings] = useState<GridSettings>({
+    enabled: false,
+    opacity: 10,
+    spacing: 50,
   });
   const [intersections, setIntersections] = useState<Point[]>([]);
 
@@ -49,19 +56,20 @@ export function MeasurementApp() {
           </div>
         </header>
 
-        <main class="max-w-7xl mx-auto">
+        <main class="max-w-[95vw] xl:max-w-[98vw] mx-auto">
           {!image ? (
             <div class="max-w-3xl mx-auto">
               <ImageUpload onImageLoad={handleImageLoad} />
             </div>
           ) : (
-            <div class="space-y-8">
-              <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 space-y-6">
+            <div class="space-y-6">
+              <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                <div class="xl:col-span-3 space-y-4">
                   <MeasurementCanvas
                     image={image}
                     adjustments={adjustments}
                     paperSize={paperSize}
+                    gridSettings={gridSettings}
                     onIntersectionsChange={setIntersections}
                   />
                   <button
@@ -86,8 +94,12 @@ export function MeasurementApp() {
                   </button>
                 </div>
 
-                <div class="space-y-6">
+                <div class="xl:col-span-1 space-y-4">
                   <PaperSizeSelector value={paperSize} onChange={setPaperSize} />
+                  <GridControls
+                    gridSettings={gridSettings}
+                    onChange={setGridSettings}
+                  />
                   <ImageAdjustments
                     adjustments={adjustments}
                     onChange={setAdjustments}

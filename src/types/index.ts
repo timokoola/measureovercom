@@ -26,3 +26,9 @@ export interface Theme {
   mode: 'light' | 'dark';
   color: 'default' | 'high-contrast';
 }
+
+export interface GridSettings {
+  enabled: boolean;
+  opacity: number; // 0-100
+  spacing: number; // pixels between grid lines
+}

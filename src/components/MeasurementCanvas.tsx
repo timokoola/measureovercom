@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import type { Line, Point, ImageAdjustments, PaperSize } from '../types';
+import type { Line, Point, ImageAdjustments, PaperSize, GridSettings } from '../types';
 import { findAllIntersections } from '../utils/math';
 import { applyImageFilters } from '../utils/imageFilters';
+import { drawGrid, snapToAxis, calculateGridSpacing } from '../utils/grid';
 
 interface MeasurementCanvasProps {
   image: HTMLImageElement | null;
   adjustments: ImageAdjustments;
   paperSize: PaperSize;
+  gridSettings: GridSettings;
   onIntersectionsChange: (points: Point[]) => void;
 }
 
@@ -14,6 +16,7 @@ export function MeasurementCanvas({
   image,
   adjustments,
   paperSize,
+  gridSettings,
   onIntersectionsChange,
 }: MeasurementCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -23,6 +26,7 @@ export function MeasurementCanvas({
     null
   );
   const [mousePos, setMousePos] = useState<Point | null>(null);
+  const gridSpacingRef = useRef<number>(50);
 
   useEffect(() => {
     if (!image || !canvasRef.current) return;
@@ -34,6 +38,11 @@ export function MeasurementCanvas({
     // Set canvas size to match image
     canvas.width = image.width;
     canvas.height = image.height;
+
+    // Calculate grid spacing based on image dimensions
+    if (image.width > 0 && image.height > 0) {
+      gridSpacingRef.current = calculateGridSpacing(image.width, image.height);
+    }
 
     // Draw image
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -48,10 +57,20 @@ export function MeasurementCanvas({
       applyImageFilters(canvas, adjustments);
     }
 
-    // Draw lines
-    ctx.strokeStyle = '#cc5500';
-    ctx.lineWidth = 2;
+    // Check if dark mode is active
+    const isDarkMode = document.documentElement.classList.contains('dark');
+
+    // Draw grid overlay if enabled
+    if (gridSettings.enabled) {
+      drawGrid(ctx, canvas.width, canvas.height, gridSpacingRef.current, gridSettings.opacity, isDarkMode);
+    }
+
+    // Draw lines - use blue color for better color-blind accessibility
+    // Blue (#0066cc) is distinguishable for all types of color blindness
+    ctx.strokeStyle = '#0066cc';
+    ctx.lineWidth = 3; // Slightly thicker for better visibility
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     lines.forEach((line) => {
       ctx.beginPath();
@@ -64,26 +83,34 @@ export function MeasurementCanvas({
     if (currentLine && mousePos) {
       ctx.beginPath();
       ctx.moveTo(currentLine.start.x, currentLine.start.y);
-      ctx.strokeStyle = '#cc5500';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      ctx.lineTo(mousePos.x, mousePos.y);
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 4]);
+      // Apply snapping to the end point
+      const snappedEnd = snapToAxis(currentLine.start, mousePos);
+      ctx.lineTo(snappedEnd.x, snappedEnd.y);
       ctx.stroke();
       ctx.setLineDash([]);
     }
 
-    // Draw intersection points
+    // Draw intersection points - use blue with white outline for visibility
     const intersections = findAllIntersections(lines);
-    ctx.fillStyle = '#cc5500';
     intersections.forEach((point) => {
+      // White outline for contrast
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      // Blue center
       ctx.beginPath();
       ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#0066cc';
       ctx.fill();
     });
 
     // Notify parent of intersections
     onIntersectionsChange(intersections);
-  }, [image, lines, adjustments, currentLine, mousePos, onIntersectionsChange]);
+  }, [image, lines, adjustments, currentLine, mousePos, gridSettings, onIntersectionsChange]);
 
   const getMousePos = (e: MouseEvent | TouchEvent): Point => {
     const canvas = canvasRef.current;
@@ -121,7 +148,9 @@ export function MeasurementCanvas({
     setMousePos(pos);
     if (isDrawing && currentLine) {
       e.preventDefault();
-      setCurrentLine({ start: currentLine.start, end: pos });
+      // Apply snapping while drawing
+      const snappedPos = snapToAxis(currentLine.start, pos);
+      setCurrentLine({ start: currentLine.start, end: snappedPos });
     }
   };
 
@@ -129,16 +158,18 @@ export function MeasurementCanvas({
     if (!isDrawing || !currentLine) return;
     e.preventDefault();
     const pos = getMousePos(e);
+    // Apply snapping to final position
+    const snappedEnd = snapToAxis(currentLine.start, pos);
     // Only create line if it has meaningful length
     const dist = Math.sqrt(
-      Math.pow(pos.x - currentLine.start.x, 2) +
-        Math.pow(pos.y - currentLine.start.y, 2)
+      Math.pow(snappedEnd.x - currentLine.start.x, 2) +
+        Math.pow(snappedEnd.y - currentLine.start.y, 2)
     );
     if (dist > 5) {
       const newLine: Line = {
         id: Date.now().toString(),
         start: currentLine.start,
-        end: pos,
+        end: snappedEnd,
       };
       setLines([...lines, newLine]);
     }
@@ -265,8 +296,8 @@ export function MeasurementCanvas({
         )}
       </div>
 
-      {/* Canvas Container */}
-      <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-800 p-4 overflow-hidden hover:border-burnt-orange/50 dark:hover:border-burnt-orange/50 transition-colors">
+      {/* Canvas Container - Made more prominent */}
+      <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-800 p-2 overflow-hidden hover:border-blue-500/50 dark:hover:border-blue-400/50 transition-colors">
         <canvas
           ref={canvasRef}
           onMouseDown={handleStart}
@@ -276,8 +307,8 @@ export function MeasurementCanvas({
           onTouchStart={handleStart}
           onTouchMove={handleMove}
           onTouchEnd={handleEnd}
-          class="max-w-full h-auto rounded-lg cursor-crosshair focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all"
-          style={{ touchAction: 'none' }}
+          class="w-full h-auto rounded-lg cursor-crosshair focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+          style={{ touchAction: 'none', maxHeight: '85vh', objectFit: 'contain' }}
           tabIndex={0}
           aria-label="Measurement canvas - draw lines by clicking and dragging. Press Escape to clear all lines."
         />
