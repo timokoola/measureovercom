@@ -10,6 +10,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
+    # NOTE: If Cloudflare Pages is connected directly to GitHub (recommended),
+    # this workflow is redundant and can be disabled or removed.
+    # Cloudflare Pages will build automatically on push to main.
+    # This workflow is only needed if you want to deploy via GitHub Actions instead.
+    continue-on-error: true  # Don't fail GitHub status checks if this fails
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,12 +25,11 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Pages (Optional - Cloudflare Pages handles builds natively)
+        continue-on-error: true  # Don't fail if deployment fails
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: measureovercom
           directory: dist
-          # Optional: Set this if you want to use a specific branch
-          # branch: main
