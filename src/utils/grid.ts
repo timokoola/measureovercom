@@ -42,15 +42,20 @@ export function snapToAxis(
   // Only snap if there's meaningful movement
   if (absDx < 1 && absDy < 1) return end;
 
+  // Force snapping on mobile (when threshold is very large >= 999)
+  const forceSnap = threshold >= 999;
+
   // Check if line is more horizontal than vertical
   if (absDx > absDy) {
     // Check if vertical deviation is small enough to snap to horizontal
-    if (absDy < threshold) {
+    // On mobile, always snap (forceSnap = true)
+    if (forceSnap || absDy < threshold) {
       return { x: end.x, y: start.y };
     }
   } else {
     // Check if horizontal deviation is small enough to snap to vertical
-    if (absDx < threshold) {
+    // On mobile, always snap (forceSnap = true)
+    if (forceSnap || absDx < threshold) {
       return { x: start.x, y: end.y };
     }
   }
@@ -75,8 +80,11 @@ export function drawGrid(
     ? `rgba(255, 255, 255, ${Math.max(0.15, opacity / 100)})` // White for dark mode, minimum 15% opacity
     : `rgba(0, 0, 0, ${Math.max(0.2, opacity / 100)})`; // Black for light mode, minimum 20% opacity
   
+  // Detect mobile for thicker grid lines
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
   ctx.strokeStyle = gridColor;
-  ctx.lineWidth = 1.5; // Slightly thicker for better visibility
+  ctx.lineWidth = isMobile ? 3 : 1.5; // Much thicker on mobile for visibility
 
   // Draw vertical lines
   for (let x = 0; x <= width; x += spacing) {

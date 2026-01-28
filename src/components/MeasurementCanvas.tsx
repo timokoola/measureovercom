@@ -65,6 +65,9 @@ export function MeasurementCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Detect mobile once for this render
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     // Set canvas size to match image
     canvas.width = image.width;
     canvas.height = image.height;
@@ -100,8 +103,11 @@ export function MeasurementCanvas({
 
     // Draw lines - use blue color for better color-blind accessibility
     // Blue (#0066cc) is distinguishable for all types of color blindness
+    const baseLineWidth = isMobileDevice ? 6 : 3; // Much thicker on mobile
+    const hoverLineWidth = isMobileDevice ? 8 : 4;
+    
     ctx.strokeStyle = '#0066cc';
-    ctx.lineWidth = 3; // Slightly thicker for better visibility
+    ctx.lineWidth = baseLineWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -115,10 +121,10 @@ export function MeasurementCanvas({
       // Highlight hovered line in move/delete mode
       if ((mode === 'move' || mode === 'delete') && hoveredLineId === line.id) {
         ctx.strokeStyle = mode === 'delete' ? '#ff4444' : '#0088ff';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = hoverLineWidth;
       } else {
         ctx.strokeStyle = '#0066cc';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = baseLineWidth;
       }
       
       ctx.stroke();
@@ -126,11 +132,12 @@ export function MeasurementCanvas({
 
     // Draw current line being drawn
     if (currentLine && mousePos) {
-      // Apply snapping to the end point (only if enabled)
-      // Use larger threshold for touch devices
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const threshold = isMobile ? 12 : 8;
-      const snappedEnd = snapToAxis(currentLine.start, mousePos, threshold, snapEnabled);
+      // On mobile, ALWAYS snap to horizontal/vertical (no diagonal lines)
+      // Use very large threshold on mobile to force snapping
+      const threshold = isMobileDevice ? 999 : 8; // Force snapping on mobile
+      const forceSnap = isMobileDevice ? true : snapEnabled; // Always snap on mobile
+      const snappedEnd = snapToAxis(currentLine.start, mousePos, threshold, forceSnap);
+      
       // Create temporary line for extension
       const tempLine: Line = {
         id: 'temp',
@@ -142,20 +149,20 @@ export function MeasurementCanvas({
       ctx.beginPath();
       ctx.moveTo(extended.start.x, extended.start.y);
       ctx.strokeStyle = '#0066cc';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = isMobileDevice ? 6 : 3; // Thicker on mobile
       ctx.setLineDash([8, 4]);
       ctx.lineTo(extended.end.x, extended.end.y);
       ctx.stroke();
       ctx.setLineDash([]);
       
-      // Show snap indicator if snapping occurred
-      if (snapEnabled && (snappedEnd.x !== mousePos.x || snappedEnd.y !== mousePos.y)) {
+      // Show snap indicator if snapping occurred (or always on mobile)
+      if ((forceSnap && isMobileDevice) || (snapEnabled && (snappedEnd.x !== mousePos.x || snappedEnd.y !== mousePos.y))) {
         ctx.beginPath();
-        ctx.arc(snappedEnd.x, snappedEnd.y, 6, 0, Math.PI * 2);
+        ctx.arc(snappedEnd.x, snappedEnd.y, isMobileDevice ? 10 : 6, 0, Math.PI * 2);
         ctx.fillStyle = '#ff8800';
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = isMobileDevice ? 3 : 2;
         ctx.stroke();
       }
     }
@@ -172,15 +179,17 @@ export function MeasurementCanvas({
     const intersections = findAllIntersections(extendedLines);
     
     // Draw intersection points - use blue with white outline for visibility
+    const pointRadius = isMobileDevice ? 10 : 6;
+    const pointInnerRadius = isMobileDevice ? 7 : 4;
     intersections.forEach((point) => {
       // White outline for contrast
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+      ctx.arc(point.x, point.y, pointRadius, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
       // Blue center
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+      ctx.arc(point.x, point.y, pointInnerRadius, 0, Math.PI * 2);
       ctx.fillStyle = '#0066cc';
       ctx.fill();
     });
@@ -304,11 +313,12 @@ export function MeasurementCanvas({
       }
     } else if (isDrawing && currentLine) {
       e.preventDefault();
-      // Apply snapping while drawing (only if enabled)
-      // Use larger threshold for touch devices for easier snapping
+      // On mobile, ALWAYS snap to horizontal/vertical (no diagonal lines)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const isTouch = 'touches' in e || 'changedTouches' in e;
-      const threshold = isTouch ? 12 : 8;
-      const snappedPos = snapToAxis(currentLine.start, pos, threshold, snapEnabled);
+      const threshold = isMobile ? 999 : (isTouch ? 12 : 8); // Force snapping on mobile
+      const forceSnap = isMobile ? true : snapEnabled; // Always snap on mobile
+      const snappedPos = snapToAxis(currentLine.start, pos, threshold, forceSnap);
       setCurrentLine({ start: currentLine.start, end: snappedPos });
     } else if ((mode === 'move' || mode === 'delete') && !isMoving) {
       // Update hover state in move/delete mode
@@ -342,11 +352,12 @@ export function MeasurementCanvas({
     }
     
     const pos = getMousePos(e);
-    // Apply snapping to final position (only if enabled)
-    // Use larger threshold for touch devices for easier snapping
+    // On mobile, ALWAYS snap to horizontal/vertical (no diagonal lines)
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const isTouch = 'touches' in e || 'changedTouches' in e;
-    const threshold = isTouch ? 12 : 8;
-    const snappedEnd = snapToAxis(currentLine.start, pos, threshold, snapEnabled);
+    const threshold = isMobileDevice ? 999 : (isTouch ? 12 : 8); // Force snapping on mobile
+    const forceSnap = isMobileDevice ? true : snapEnabled; // Always snap on mobile
+    const snappedEnd = snapToAxis(currentLine.start, pos, threshold, forceSnap);
     // Only create line if it has meaningful length
     const dist = Math.sqrt(
       Math.pow(snappedEnd.x - currentLine.start.x, 2) +
