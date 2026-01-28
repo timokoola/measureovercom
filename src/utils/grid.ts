@@ -1,6 +1,6 @@
 import type { Point } from '../types';
 
-const SNAP_THRESHOLD = 10; // pixels
+const SNAP_THRESHOLD = 5; // pixels - reduced for less aggressive snapping
 
 /**
  * Calculate grid spacing based on image dimensions
@@ -24,24 +24,33 @@ export function snapToGrid(point: Point, gridSpacing: number): Point {
 /**
  * Snap a line to horizontal or vertical if it's close enough
  * Returns the snapped end point
+ * Only snaps if the deviation from horizontal/vertical is small
  */
 export function snapToAxis(
   start: Point,
   end: Point,
-  threshold: number = SNAP_THRESHOLD
+  threshold: number = SNAP_THRESHOLD,
+  enabled: boolean = true
 ): Point {
-  const dx = Math.abs(end.x - start.x);
-  const dy = Math.abs(end.y - start.y);
+  if (!enabled) return end;
+  
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
 
-  // If line is more horizontal than vertical
-  if (dx > dy) {
-    // Check if we're close enough to horizontal
-    if (Math.abs(end.y - start.y) < threshold) {
+  // Only snap if there's meaningful movement
+  if (absDx < 1 && absDy < 1) return end;
+
+  // Check if line is more horizontal than vertical
+  if (absDx > absDy) {
+    // Check if vertical deviation is small enough to snap to horizontal
+    if (absDy < threshold) {
       return { x: end.x, y: start.y };
     }
   } else {
-    // Check if we're close enough to vertical
-    if (Math.abs(end.x - start.x) < threshold) {
+    // Check if horizontal deviation is small enough to snap to vertical
+    if (absDx < threshold) {
       return { x: start.x, y: end.y };
     }
   }

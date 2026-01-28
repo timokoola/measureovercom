@@ -1,11 +1,13 @@
-import type { Point, PaperSize } from '../types';
+import type { Point, PaperSize, MeasurementUnit } from '../types';
 import { convertPixelsToMM } from '../utils/paperSizes';
+import { formatValue } from '../utils/units';
 
 interface CoordinateDisplayProps {
   points: Point[];
   imageWidth: number;
   imageHeight: number;
   paperSize: PaperSize;
+  unit: MeasurementUnit;
 }
 
 export function CoordinateDisplay({
@@ -13,6 +15,7 @@ export function CoordinateDisplay({
   imageWidth,
   imageHeight,
   paperSize,
+  unit,
 }: CoordinateDisplayProps) {
   if (points.length === 0) {
     return (
@@ -107,16 +110,14 @@ export function CoordinateDisplay({
                 <div class="flex items-baseline gap-2">
                   <span class="text-xs text-gray-500 dark:text-gray-500 font-medium">X:</span>
                   <span class="text-lg font-bold font-mono text-gray-900 dark:text-gray-100">
-                    {xMM.toFixed(1)}
+                    {formatValue(xMM, unit)}
                   </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-500">mm</span>
                 </div>
                 <div class="flex items-baseline gap-2">
                   <span class="text-xs text-gray-500 dark:text-gray-500 font-medium">Y:</span>
                   <span class="text-lg font-bold font-mono text-gray-900 dark:text-gray-100">
-                    {yMM.toFixed(1)}
+                    {formatValue(yMM, unit)}
                   </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-500">mm</span>
                 </div>
               </div>
             </div>

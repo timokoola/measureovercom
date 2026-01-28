@@ -20,7 +20,7 @@ export function ImageAdjustments({
     ) => {
       const newAdjustments = { ...adjustments, [key]: value };
       
-      if (immediate || key === 'grayscale') {
+      if (immediate || key === 'grayscale' || key === 'crop') {
         onChange(newAdjustments);
       } else {
         // Debounce slider inputs for better performance
@@ -106,6 +106,80 @@ export function ImageAdjustments({
             class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
             aria-label="Adjust contrast"
           />
+        </div>
+
+        <div class="flex flex-col gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex justify-between items-center">
+            <label
+              for="rotation"
+              class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Rotation
+            </label>
+            <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
+              {adjustments.rotation}°
+            </span>
+          </div>
+          <input
+            id="rotation"
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            value={adjustments.rotation}
+            onInput={(e) =>
+              updateAdjustment('rotation', parseInt(e.currentTarget.value), false)
+            }
+            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+            aria-label="Rotate image"
+          />
+          <div class="flex gap-2">
+            <button
+              onClick={() => updateAdjustment('rotation', (adjustments.rotation - 90 + 360) % 360, true)}
+              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+              aria-label="Rotate 90° counter-clockwise"
+            >
+              ↺ -90°
+            </button>
+            <button
+              onClick={() => updateAdjustment('rotation', (adjustments.rotation + 90) % 360, true)}
+              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+              aria-label="Rotate 90° clockwise"
+            >
+              ↻ +90°
+            </button>
+            <button
+              onClick={() => updateAdjustment('rotation', 0, true)}
+              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+              aria-label="Reset rotation"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <label class="flex items-center gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={adjustments.crop.enabled}
+              onChange={(e) =>
+                updateAdjustment('crop', {
+                  ...adjustments.crop,
+                  enabled: e.currentTarget.checked,
+                }, true)
+              }
+              class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded border-gray-300 dark:border-gray-600"
+            />
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
+              Enable Crop
+            </span>
+          </label>
+          {adjustments.crop.enabled && (
+            <div class="pl-8 space-y-3 text-xs text-gray-600 dark:text-gray-400">
+              <p>Note: Crop functionality is basic. For advanced cropping, use image editing software before uploading.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

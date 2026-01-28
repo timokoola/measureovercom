@@ -6,10 +6,16 @@ interface PaperSizeSelectorProps {
 }
 
 const PAPER_LABELS: Record<PaperSize, string> = {
-  a5: 'A5 (148 × 210 mm)',
   a6: 'A6 (105 × 148 mm)',
+  a5: 'A5 (148 × 210 mm)',
   a4: 'A4 (210 × 297 mm)',
+  a3: 'A3 (297 × 420 mm)',
+  a2: 'A2 (420 × 594 mm)',
+  a1: 'A1 (594 × 841 mm)',
+  a0: 'A0 (841 × 1189 mm)',
   'us-letter': 'US Letter (8.5 × 11 in)',
+  'us-legal': 'US Legal (8.5 × 14 in)',
+  'us-tabloid': 'US Tabloid (11 × 17 in)',
 };
 
 export function PaperSizeSelector({ value, onChange }: PaperSizeSelectorProps) {
