@@ -96,13 +96,18 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 
 ## Deployment
 
-This app is designed to be deployed to Cloudflare Pages:
+This app is designed to be deployed to Cloudflare Pages. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+**Quick Deploy:**
 
 1. Build the project: `npm run build`
 2. Deploy the `dist/` directory to Cloudflare Pages
 3. Configure build settings:
    - Build command: `npm run build`
    - Output directory: `dist`
+   - Node version: 20
+
+For GitHub integration, CI/CD, and mobile testing instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## Browser Support
 
