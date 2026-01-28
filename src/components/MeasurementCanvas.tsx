@@ -127,7 +127,10 @@ export function MeasurementCanvas({
     // Draw current line being drawn
     if (currentLine && mousePos) {
       // Apply snapping to the end point (only if enabled)
-      const snappedEnd = snapToAxis(currentLine.start, mousePos, 5, snapEnabled);
+      // Use larger threshold for touch devices
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const threshold = isMobile ? 12 : 8;
+      const snappedEnd = snapToAxis(currentLine.start, mousePos, threshold, snapEnabled);
       // Create temporary line for extension
       const tempLine: Line = {
         id: 'temp',
@@ -196,8 +199,13 @@ export function MeasurementCanvas({
 
     let clientX: number, clientY: number;
     if ('touches' in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
+      // For touch events, use touches if available, otherwise changedTouches (for touchend)
+      const touch = e.touches && e.touches.length > 0 
+        ? e.touches[0] 
+        : (e.changedTouches && e.changedTouches.length > 0 ? e.changedTouches[0] : null);
+      if (!touch) return { x: 0, y: 0 };
+      clientX = touch.clientX;
+      clientY = touch.clientY;
     } else {
       clientX = e.clientX;
       clientY = e.clientY;
@@ -332,7 +340,10 @@ export function MeasurementCanvas({
     
     const pos = getMousePos(e);
     // Apply snapping to final position (only if enabled)
-    const snappedEnd = snapToAxis(currentLine.start, pos, 5, snapEnabled);
+    // Use larger threshold for touch devices for easier snapping
+    const isTouch = 'touches' in e || 'changedTouches' in e;
+    const threshold = isTouch ? 12 : 8;
+    const snappedEnd = snapToAxis(currentLine.start, pos, threshold, snapEnabled);
     // Only create line if it has meaningful length
     const dist = Math.sqrt(
       Math.pow(snappedEnd.x - currentLine.start.x, 2) +
@@ -626,6 +637,7 @@ export function MeasurementCanvas({
           onTouchStart={handleStart}
           onTouchMove={handleMove}
           onTouchEnd={handleEnd}
+          onTouchCancel={handleEnd}
           class={`w-full h-auto rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
             mode === 'move' ? 'cursor-move' : mode === 'delete' ? 'cursor-pointer' : 'cursor-crosshair'
           }`}

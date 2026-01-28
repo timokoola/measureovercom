@@ -1,6 +1,6 @@
 import type { Point } from '../types';
 
-const SNAP_THRESHOLD = 5; // pixels - reduced for less aggressive snapping
+const SNAP_THRESHOLD = 8; // pixels - increased for better mobile snapping
 
 /**
  * Calculate grid spacing based on image dimensions
