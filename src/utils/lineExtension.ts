@@ -15,16 +15,18 @@ export function extendLineToEdges(
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   
-  // Handle edge case: vertical line
-  if (Math.abs(dx) < 0.001) {
+  // Handle edge case: vertical line (or very close to vertical)
+  // Use larger threshold to catch near-vertical lines from snapping
+  if (Math.abs(dx) < 0.1) {
     return {
       start: { x: start.x, y: 0 },
       end: { x: end.x, y: canvasHeight },
     };
   }
   
-  // Handle edge case: horizontal line
-  if (Math.abs(dy) < 0.001) {
+  // Handle edge case: horizontal line (or very close to horizontal)
+  // Use larger threshold to catch near-horizontal lines from snapping
+  if (Math.abs(dy) < 0.1) {
     return {
       start: { x: 0, y: start.y },
       end: { x: canvasWidth, y: end.y },

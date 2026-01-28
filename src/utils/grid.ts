@@ -45,17 +45,28 @@ export function snapToAxis(
   // Force snapping on mobile (when threshold is very large >= 999)
   const forceSnap = threshold >= 999;
 
+  if (forceSnap) {
+    // On mobile: ALWAYS snap to the axis with larger movement
+    // This ensures lines are always perfectly horizontal or vertical
+    if (absDx >= absDy) {
+      // More horizontal movement - snap to horizontal
+      return { x: end.x, y: start.y };
+    } else {
+      // More vertical movement - snap to vertical
+      return { x: start.x, y: end.y };
+    }
+  }
+
+  // Desktop: Only snap if within threshold
   // Check if line is more horizontal than vertical
   if (absDx > absDy) {
     // Check if vertical deviation is small enough to snap to horizontal
-    // On mobile, always snap (forceSnap = true)
-    if (forceSnap || absDy < threshold) {
+    if (absDy < threshold) {
       return { x: end.x, y: start.y };
     }
   } else {
     // Check if horizontal deviation is small enough to snap to vertical
-    // On mobile, always snap (forceSnap = true)
-    if (forceSnap || absDx < threshold) {
+    if (absDx < threshold) {
       return { x: start.x, y: end.y };
     }
   }
