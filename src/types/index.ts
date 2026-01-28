@@ -39,6 +39,7 @@ export interface GridSettings {
   enabled: boolean;
   opacity: number; // 0-100
   spacing: number; // pixels between grid lines
+  lineThickness: number; // 1-20 pixels, default 6 on mobile, 3 on desktop
 }
 
 export type CanvasMode = 'draw' | 'move' | 'delete';

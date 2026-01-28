@@ -107,8 +107,10 @@ export async function exportImageWithLines(
   }
 
   // Draw lines (scaled to match image)
+  // Use gridSettings.lineThickness if available, otherwise default
+  const baseThickness = gridSettings.lineThickness || 3;
   ctx.strokeStyle = '#0066cc';
-  ctx.lineWidth = Math.max(2, 3 * Math.min(scaleX, scaleY)); // Scale line width proportionally
+  ctx.lineWidth = Math.max(2, baseThickness * Math.min(scaleX, scaleY)); // Scale line width proportionally
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 

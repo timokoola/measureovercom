@@ -42,10 +42,15 @@ export function MeasurementApp() {
       height: 100,
     },
   });
-  const [gridSettings, setGridSettings] = useState<GridSettings>({
-    enabled: false,
-    opacity: 10,
-    spacing: 50,
+  const [gridSettings, setGridSettings] = useState<GridSettings>(() => {
+    // Detect mobile and set default line thickness
+    const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    return {
+      enabled: false,
+      opacity: 10,
+      spacing: 50,
+      lineThickness: isMobile ? 8 : 3, // Thicker default on mobile
+    };
   });
   const [lines, setLines] = useState<Line[]>([]);
   const [intersections, setIntersections] = useState<Point[]>([]);
@@ -127,7 +132,11 @@ export function MeasurementApp() {
       setLines(projectData.lines);
       setPaperSize(projectData.paperSize);
       setAdjustments(projectData.adjustments);
-      setGridSettings(projectData.gridSettings);
+      // Ensure lineThickness exists (for old projects)
+      setGridSettings({
+        ...projectData.gridSettings,
+        lineThickness: projectData.gridSettings.lineThickness || (typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 8 : 3),
+      });
       setUnit(projectData.unit);
       undoRedoRef.current.clear();
       undoRedoRef.current.pushState({ lines: projectData.lines });

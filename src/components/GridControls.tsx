@@ -64,6 +64,35 @@ export function GridControls({ gridSettings, onChange }: GridControlsProps) {
             </div>
           </div>
         )}
+
+        <div class="flex flex-col gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex justify-between items-center">
+            <label
+              for="line-thickness"
+              class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Line Thickness
+            </label>
+            <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
+              {gridSettings.lineThickness}px
+            </span>
+          </div>
+          <input
+            id="line-thickness"
+            type="range"
+            min="1"
+            max="20"
+            value={gridSettings.lineThickness}
+            onInput={(e) =>
+              updateSetting('lineThickness', parseInt(e.currentTarget.value))
+            }
+            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+            aria-label="Adjust line thickness"
+          />
+          <div class="text-xs text-gray-500 dark:text-gray-500">
+            Thicker lines are easier to see on mobile devices
+          </div>
+        </div>
       </div>
     </div>
   );

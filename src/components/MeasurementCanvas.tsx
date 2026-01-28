@@ -103,8 +103,8 @@ export function MeasurementCanvas({
 
     // Draw lines - use blue color for better color-blind accessibility
     // Blue (#0066cc) is distinguishable for all types of color blindness
-    const baseLineWidth = isMobileDevice ? 6 : 3; // Much thicker on mobile
-    const hoverLineWidth = isMobileDevice ? 8 : 4;
+    const baseLineWidth = gridSettings.lineThickness;
+    const hoverLineWidth = Math.round(gridSettings.lineThickness * 1.5); // 50% thicker when hovered
     
     ctx.strokeStyle = '#0066cc';
     ctx.lineWidth = baseLineWidth;
@@ -149,7 +149,7 @@ export function MeasurementCanvas({
       ctx.beginPath();
       ctx.moveTo(extended.start.x, extended.start.y);
       ctx.strokeStyle = '#0066cc';
-      ctx.lineWidth = isMobileDevice ? 6 : 3; // Thicker on mobile
+      ctx.lineWidth = gridSettings.lineThickness; // Use configurable thickness
       ctx.setLineDash([8, 4]);
       ctx.lineTo(extended.end.x, extended.end.y);
       ctx.stroke();
