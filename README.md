@@ -5,11 +5,18 @@ A fast, lightweight, client-only web application for adding measurement lines on
 ## Features
 
 - 📸 Upload images via drag-and-drop or file picker
-- ✏️ Draw measurement lines on images
-- 📏 View coordinates of line intersections in millimeters
-- 📄 Support for multiple paper sizes (A5, A6, A4, US Letter)
-- 🎨 Image adjustments (grayscale, brightness, contrast)
-- 🌓 Light and dark theme support
+- ✏️ Draw measurement lines on images (with horizontal/vertical snapping)
+- 🎯 Move and delete individual lines
+- ↩️ Undo/redo functionality with keyboard shortcuts
+- 📏 View coordinates of line intersections in multiple units (mm, cm, inches)
+- 📄 Support for multiple paper sizes (A6-A0, US Letter/Legal/Tabloid)
+- 🎨 Image adjustments (grayscale, brightness, contrast, rotation, crop)
+- 📐 Grid overlay with adjustable opacity
+- 💾 Save and load projects (localStorage)
+- 📥 Export images with lines overlay at paper size resolution (300 DPI)
+- 🌓 Light and dark theme support with high contrast mode
+- 🌍 Multi-language support (English, Finnish, Swedish)
+- 📱 Mobile-optimized with touch gestures and thicker lines
 - ♿ Accessibility features (keyboard navigation, color-blind friendly)
 - ⚡ Optimized for speed and performance
 
