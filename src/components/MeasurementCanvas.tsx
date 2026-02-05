@@ -560,34 +560,54 @@ export function MeasurementCanvas({
         <>
           <div class="absolute inset-x-0 top-1 flex items-center justify-center pointer-events-none">
             <div
-              class="w-16 h-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-row-resize"
+              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-sm"
               onMouseDown={handleHandleStart('y')}
               onTouchStart={handleHandleStart('y')}
               aria-label="Drag to add horizontal line (top)"
+              style={{
+                backgroundColor: '#1d4ed8',
+                backgroundImage:
+                  'repeating-linear-gradient(135deg, rgba(255,255,255,0.35) 0 8px, rgba(255,255,255,0) 8px 16px)',
+              }}
             />
           </div>
           <div class="absolute inset-x-0 bottom-1 flex items-center justify-center pointer-events-none">
             <div
-              class="w-16 h-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-row-resize"
+              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-sm"
               onMouseDown={handleHandleStart('y')}
               onTouchStart={handleHandleStart('y')}
               aria-label="Drag to add horizontal line (bottom)"
+              style={{
+                backgroundColor: '#1d4ed8',
+                backgroundImage:
+                  'repeating-linear-gradient(135deg, rgba(255,255,255,0.35) 0 8px, rgba(255,255,255,0) 8px 16px)',
+              }}
             />
           </div>
           <div class="absolute inset-y-0 left-1 flex items-center justify-center pointer-events-none">
             <div
-              class="h-16 w-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-col-resize"
+              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-sm"
               onMouseDown={handleHandleStart('x')}
               onTouchStart={handleHandleStart('x')}
               aria-label="Drag to add vertical line (left)"
+              style={{
+                backgroundColor: '#1d4ed8',
+                backgroundImage:
+                  'repeating-linear-gradient(135deg, rgba(255,255,255,0.35) 0 8px, rgba(255,255,255,0) 8px 16px)',
+              }}
             />
           </div>
           <div class="absolute inset-y-0 right-1 flex items-center justify-center pointer-events-none">
             <div
-              class="h-16 w-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-col-resize"
+              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-sm"
               onMouseDown={handleHandleStart('x')}
               onTouchStart={handleHandleStart('x')}
               aria-label="Drag to add vertical line (right)"
+              style={{
+                backgroundColor: '#1d4ed8',
+                backgroundImage:
+                  'repeating-linear-gradient(135deg, rgba(255,255,255,0.35) 0 8px, rgba(255,255,255,0) 8px 16px)',
+              }}
             />
           </div>
         </>
