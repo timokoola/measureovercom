@@ -42,7 +42,7 @@ export interface GridSettings {
   lineThickness: number; // 1-20 pixels, default 6 on mobile, 3 on desktop
 }
 
-export type CanvasMode = 'cross' | 'line';
+export type CanvasMode = 'cross' | 'line' | 'delete';
 
 export type MeasurementUnit = 'mm' | 'cm' | 'inches';
 

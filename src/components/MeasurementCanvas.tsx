@@ -4,6 +4,7 @@ import { findAllIntersections } from '../utils/math';
 import { applyImageFilters } from '../utils/imageFilters';
 import { drawGrid, calculateGridSpacing } from '../utils/grid';
 import { extendLineToEdges } from '../utils/lineExtension';
+import { findLineAtPoint } from '../utils/lineHitDetection';
 import { t } from '../utils/i18n';
 
 interface MeasurementCanvasProps {
@@ -11,8 +12,8 @@ interface MeasurementCanvasProps {
   adjustments: ImageAdjustments;
   paperSize: PaperSize;
   gridSettings: GridSettings;
-  mode: 'cross' | 'line';
-  onModeChange?: (mode: 'cross' | 'line') => void;
+  mode: 'cross' | 'line' | 'delete';
+  onModeChange?: (mode: 'cross' | 'line' | 'delete') => void;
   onIntersectionsChange: (points: Point[]) => void;
   onLinesChange?: (lines: Line[]) => void;
 }
@@ -29,7 +30,7 @@ export function MeasurementCanvas({
 }: MeasurementCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [lines, setLines] = useState<Line[]>([]);
-  const [mode, setMode] = useState<'cross' | 'line'>(externalMode || 'cross');
+  const [mode, setMode] = useState<'cross' | 'line' | 'delete'>(externalMode || 'cross');
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState<{ start: Point; end: Point } | null>(null);
   const [mousePos, setMousePos] = useState<Point | null>(null);
@@ -37,6 +38,7 @@ export function MeasurementCanvas({
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const [dragAxis, setDragAxis] = useState<'x' | 'y' | null>(null);
   const [dragPos, setDragPos] = useState<number | null>(null);
+  const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
   const gridSpacingRef = useRef<number>(50);
 
   // Sync external mode changes
@@ -52,6 +54,9 @@ export function MeasurementCanvas({
       setIsDrawing(false);
       setCurrentLine(null);
       setMousePos(null);
+    }
+    if (mode !== 'delete') {
+      setHoveredLineId(null);
     }
     // Drag handles are always available; reset active drag when switching modes
     setIsDraggingHandle(false);
@@ -115,6 +120,7 @@ export function MeasurementCanvas({
     // Draw lines - use blue color for better color-blind accessibility
     // Blue (#0066cc) is distinguishable for all types of color blindness
     const baseLineWidth = gridSettings.lineThickness;
+    const hoverLineWidth = Math.round(gridSettings.lineThickness * 1.5);
     
     ctx.strokeStyle = '#0066cc';
     ctx.lineWidth = baseLineWidth;
@@ -128,8 +134,13 @@ export function MeasurementCanvas({
       ctx.moveTo(extended.start.x, extended.start.y);
       ctx.lineTo(extended.end.x, extended.end.y);
       
-      ctx.strokeStyle = '#0066cc';
-      ctx.lineWidth = baseLineWidth;
+      if (mode === 'delete' && hoveredLineId === line.id) {
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = hoverLineWidth;
+      } else {
+        ctx.strokeStyle = '#0066cc';
+        ctx.lineWidth = baseLineWidth;
+      }
       ctx.stroke();
     });
 
@@ -180,7 +191,7 @@ export function MeasurementCanvas({
 
     // Notify parent of intersections
     onIntersectionsChange(intersections);
-  }, [image, lines, adjustments, currentLine, mousePos, gridSettings, mode, onIntersectionsChange]);
+  }, [image, lines, adjustments, currentLine, mousePos, gridSettings, mode, hoveredLineId, onIntersectionsChange]);
 
   const getMousePos = (e: MouseEvent | TouchEvent): Point => {
     const canvas = canvasRef.current;
@@ -233,6 +244,15 @@ export function MeasurementCanvas({
       return;
     }
 
+    if (mode === 'delete') {
+      const hitResult = findLineAtPoint(pos, lines, canvas.width, canvas.height);
+      if (hitResult) {
+        setLines(lines.filter((l) => l.id !== hitResult.lineId));
+        setHoveredLineId(null);
+      }
+      return;
+    }
+
     if (mode === 'line') {
       if (!pendingLineStart) {
         setPendingLineStart(pos);
@@ -256,6 +276,14 @@ export function MeasurementCanvas({
   const handleMove = (e: MouseEvent | TouchEvent) => {
     const pos = getMousePos(e);
     setMousePos(pos);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    if (mode === 'delete') {
+      const hitResult = findLineAtPoint(pos, lines, canvas.width, canvas.height);
+      setHoveredLineId(hitResult?.lineId || null);
+      return;
+    }
     if (mode !== 'line' || !pendingLineStart) return;
     e.preventDefault();
 
@@ -387,7 +415,11 @@ export function MeasurementCanvas({
                 {t('measurementTool')}
               </h3>
               <p class="text-xs text-gray-600 dark:text-gray-400">
-                {mode === 'cross' ? t('crossMode') : t('lineMode')}
+                {mode === 'cross'
+                  ? t('crossMode')
+                  : mode === 'line'
+                  ? t('lineMode')
+                  : t('deleteMode')}
               </p>
             </div>
           </div>
@@ -447,6 +479,33 @@ export function MeasurementCanvas({
                   />
                 </svg>
                 {t('line')}
+              </button>
+              <button
+                onClick={() => {
+                  setMode('delete');
+                  onModeChange?.('delete');
+                }}
+                class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  mode === 'delete'
+                    ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+                }`}
+                aria-label={`${t('switchToMode')} ${t('delete')}`}
+              >
+                <svg
+                  class="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+                {t('delete')}
               </button>
             </div>
             {lines.length > 0 && (
@@ -509,7 +568,11 @@ export function MeasurementCanvas({
               </svg>
               <div>
                 <p class="font-medium mb-1">
-                  {mode === 'cross' ? t('crossInstructionsTitle') : t('lineInstructionsTitle')}
+                  {mode === 'cross'
+                    ? t('crossInstructionsTitle')
+                    : mode === 'line'
+                    ? t('lineInstructionsTitle')
+                    : t('deleteInstructionsTitle')}
                 </p>
                 <ul class="list-disc list-inside space-y-0.5 ml-2">
                   {mode === 'cross' ? (
@@ -528,7 +591,12 @@ export function MeasurementCanvas({
                         {lineCancelEnd || ''}
                       </li>
                     </>
-                  ) : null}
+                  ) : (
+                    <>
+                      <li>{t('deleteClickLine')}</li>
+                      <li>{t('deleteHoverHint')}</li>
+                    </>
+                  )}
                   <li>{t('dragHandlesHint')}</li>
                   <li>{t('intersectionPointsAppear')}</li>
                 </ul>
@@ -552,7 +620,9 @@ export function MeasurementCanvas({
           onTouchMove={handleMove}
           onTouchEnd={handleEnd}
           onTouchCancel={handleEnd}
-          class={`rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all cursor-crosshair`}
+          class={`rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
+            mode === 'delete' ? 'cursor-pointer' : 'cursor-crosshair'
+          }`}
           style={{
             touchAction: 'none',
             maxWidth: '100%',

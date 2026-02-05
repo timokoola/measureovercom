@@ -10,8 +10,10 @@ export interface Translations {
   // Modes
   cross: string;
   line: string;
+  delete: string;
   crossMode: string;
   lineMode: string;
+  deleteMode: string;
   linePending: string;
   lineCount: string;
   lineCountPlural: string;
@@ -85,12 +87,15 @@ export interface Translations {
   measurementTool: string;
   crossInstructionsTitle: string;
   lineInstructionsTitle: string;
+  deleteInstructionsTitle: string;
   crossClickOnce: string;
   crossAddsLines: string;
   linesAutoExtend: string;
   lineClickFirst: string;
   lineExactPlacement: string;
   lineCancel: string;
+  deleteClickLine: string;
+  deleteHoverHint: string;
   dragHandlesHint: string;
   intersectionPointsAppear: string;
   
@@ -145,8 +150,10 @@ const translations: Record<Language, Translations> = {
     selectImage: 'Select Image',
     cross: 'Cross',
     line: 'Line',
+    delete: 'Delete',
     crossMode: 'Cross mode: Click to add vertical + horizontal lines',
     lineMode: 'Line mode: Click two points to place a line',
+    deleteMode: 'Delete mode: Click a line to remove it',
     linePending: 'Line pending...',
     lineCount: 'line',
     lineCountPlural: 'lines',
@@ -204,12 +211,15 @@ const translations: Record<Language, Translations> = {
     measurementTool: 'Measurement Tool',
     crossInstructionsTitle: 'Cross mode:',
     lineInstructionsTitle: 'Line mode:',
+    deleteInstructionsTitle: 'Delete mode:',
     crossClickOnce: 'Click once to place a crosshair at that point',
     crossAddsLines: 'Adds one vertical and one horizontal line',
     linesAutoExtend: 'Lines automatically extend to canvas edges',
     lineClickFirst: 'Click the first point, then click the second point',
     lineExactPlacement: 'Line is placed exactly where you click (no snapping)',
     lineCancel: 'Press Esc to cancel the pending line',
+    deleteClickLine: 'Click on a line to delete it',
+    deleteHoverHint: 'Hover over a line to see which one will be removed',
     dragHandlesHint: 'Drag edge handles to add a vertical or horizontal line',
     intersectionPointsAppear: 'Intersection points appear automatically',
     invalidImage: 'Please select an image file',
@@ -254,8 +264,10 @@ const translations: Record<Language, Translations> = {
     selectImage: 'Valitse kuva',
     cross: 'Risti',
     line: 'Viiva',
+    delete: 'Poista',
     crossMode: 'Ristitila: Klikkaa lisätäksesi pysty- ja vaakaviivan',
     lineMode: 'Viivatila: Klikkaa kaksi pistettä viivan luomiseksi',
+    deleteMode: 'Poistotila: Klikkaa viivaa poistaaksesi sen',
     linePending: 'Viiva odottaa...',
     lineCount: 'viiva',
     lineCountPlural: 'viivaa',
@@ -313,12 +325,15 @@ const translations: Record<Language, Translations> = {
     measurementTool: 'Mittatyökalu',
     crossInstructionsTitle: 'Ristitila:',
     lineInstructionsTitle: 'Viivatila:',
+    deleteInstructionsTitle: 'Poistotila:',
     crossClickOnce: 'Klikkaa kerran asettaaksesi ristikon',
     crossAddsLines: 'Lisää yhden pysty- ja yhden vaakaviivan',
     linesAutoExtend: 'Viivat ulottuvat automaattisesti kuvan reunoihin',
     lineClickFirst: 'Klikkaa ensimmäinen piste, sitten toinen',
     lineExactPlacement: 'Viiva asetetaan tarkasti klikkauskohtiin (ei napautusta)',
     lineCancel: 'Paina Esc peruaksesi keskeneräisen viivan',
+    deleteClickLine: 'Klikkaa viivaa poistaaksesi sen',
+    deleteHoverHint: 'Vie hiiri viivan päälle nähdäksesi mikä poistetaan',
     dragHandlesHint: 'Vedä reunakahvoista lisätäksesi pysty- tai vaakaviivan',
     intersectionPointsAppear: 'Leikkauspisteet ilmestyvät automaattisesti',
     invalidImage: 'Valitse kuvatiedosto',
@@ -363,8 +378,10 @@ const translations: Record<Language, Translations> = {
     selectImage: 'Välj bild',
     cross: 'Kors',
     line: 'Linje',
+    delete: 'Radera',
     crossMode: 'Korsläge: Klicka för att lägga till vertikal + horisontell linje',
     lineMode: 'Linjeläge: Klicka två punkter för att placera en linje',
+    deleteMode: 'Raderaläge: Klicka på en linje för att ta bort den',
     linePending: 'Linje väntar...',
     lineCount: 'linje',
     lineCountPlural: 'linjer',
@@ -422,12 +439,15 @@ const translations: Record<Language, Translations> = {
     measurementTool: 'Mätverktyg',
     crossInstructionsTitle: 'Korsläge:',
     lineInstructionsTitle: 'Linjeläge:',
+    deleteInstructionsTitle: 'Raderaläge:',
     crossClickOnce: 'Klicka en gång för att placera ett kors',
     crossAddsLines: 'Lägger till en vertikal och en horisontell linje',
     linesAutoExtend: 'Linjer sträcker sig automatiskt till kanvaskanter',
     lineClickFirst: 'Klicka första punkten, sedan den andra',
     lineExactPlacement: 'Linjen placeras exakt där du klickar (ingen snapning)',
     lineCancel: 'Tryck Esc för att avbryta den väntande linjen',
+    deleteClickLine: 'Klicka på en linje för att radera den',
+    deleteHoverHint: 'Hovra över en linje för att se vilken som tas bort',
     dragHandlesHint: 'Dra i kanthandtag för att lägga till vertikal eller horisontell linje',
     intersectionPointsAppear: 'Skärningspunkter visas automatiskt',
     invalidImage: 'Välj en bildfil',
@@ -472,8 +492,10 @@ const translations: Record<Language, Translations> = {
     selectImage: 'Sélectionner une image',
     cross: 'Croix',
     line: 'Ligne',
+    delete: 'Supprimer',
     crossMode: 'Mode croix : cliquez pour ajouter une ligne verticale et horizontale',
     lineMode: 'Mode ligne : cliquez sur deux points pour placer une ligne',
+    deleteMode: 'Mode suppression : cliquez sur une ligne pour la retirer',
     linePending: 'Ligne en attente...',
     lineCount: 'ligne',
     lineCountPlural: 'lignes',
@@ -531,12 +553,15 @@ const translations: Record<Language, Translations> = {
     measurementTool: 'Outil de mesure',
     crossInstructionsTitle: 'Mode croix :',
     lineInstructionsTitle: 'Mode ligne :',
+    deleteInstructionsTitle: 'Mode suppression :',
     crossClickOnce: 'Cliquez une fois pour placer une croix',
     crossAddsLines: 'Ajoute une ligne verticale et une ligne horizontale',
     linesAutoExtend: 'Les lignes s’étendent automatiquement jusqu’aux bords',
     lineClickFirst: 'Cliquez sur le premier point, puis sur le second',
     lineExactPlacement: 'La ligne est placée exactement là où vous cliquez (sans aimantation)',
     lineCancel: 'Appuyez sur Esc pour annuler la ligne en attente',
+    deleteClickLine: 'Cliquez sur une ligne pour la supprimer',
+    deleteHoverHint: 'Survolez une ligne pour voir celle qui sera supprimée',
     dragHandlesHint: 'Faites glisser les poignées de bord pour ajouter une ligne verticale ou horizontale',
     intersectionPointsAppear: 'Les points d’intersection apparaissent automatiquement',
     invalidImage: 'Veuillez sélectionner un fichier image',
@@ -581,8 +606,10 @@ const translations: Record<Language, Translations> = {
     selectImage: 'Seleccionar imagen',
     cross: 'Cruz',
     line: 'Línea',
+    delete: 'Eliminar',
     crossMode: 'Modo cruz: haz clic para añadir una línea vertical y horizontal',
     lineMode: 'Modo línea: haz clic en dos puntos para colocar una línea',
+    deleteMode: 'Modo eliminar: haz clic en una línea para quitarla',
     linePending: 'Línea pendiente...',
     lineCount: 'línea',
     lineCountPlural: 'líneas',
@@ -640,12 +667,15 @@ const translations: Record<Language, Translations> = {
     measurementTool: 'Herramienta de medición',
     crossInstructionsTitle: 'Modo cruz:',
     lineInstructionsTitle: 'Modo línea:',
+    deleteInstructionsTitle: 'Modo eliminar:',
     crossClickOnce: 'Haz clic una vez para colocar una cruz',
     crossAddsLines: 'Añade una línea vertical y una horizontal',
     linesAutoExtend: 'Las líneas se extienden automáticamente hasta los bordes',
     lineClickFirst: 'Haz clic en el primer punto y luego en el segundo',
     lineExactPlacement: 'La línea se coloca exactamente donde haces clic (sin ajuste)',
     lineCancel: 'Pulsa Esc para cancelar la línea pendiente',
+    deleteClickLine: 'Haz clic en una línea para eliminarla',
+    deleteHoverHint: 'Pasa el cursor sobre una línea para ver cuál se eliminará',
     dragHandlesHint: 'Arrastra los tiradores del borde para añadir una línea vertical u horizontal',
     intersectionPointsAppear: 'Los puntos de intersección aparecen automáticamente',
     invalidImage: 'Selecciona un archivo de imagen',
@@ -690,8 +720,10 @@ const translations: Record<Language, Translations> = {
     selectImage: 'Bild auswählen',
     cross: 'Kreuz',
     line: 'Linie',
+    delete: 'Löschen',
     crossMode: 'Kreuzmodus: Klicken, um vertikale + horizontale Linie hinzuzufügen',
     lineMode: 'Linienmodus: Zwei Punkte anklicken, um eine Linie zu platzieren',
+    deleteMode: 'Löschmodus: Linie anklicken, um sie zu entfernen',
     linePending: 'Linie ausstehend...',
     lineCount: 'Linie',
     lineCountPlural: 'Linien',
@@ -749,12 +781,15 @@ const translations: Record<Language, Translations> = {
     measurementTool: 'Messwerkzeug',
     crossInstructionsTitle: 'Kreuzmodus:',
     lineInstructionsTitle: 'Linienmodus:',
+    deleteInstructionsTitle: 'Löschmodus:',
     crossClickOnce: 'Einmal klicken, um ein Kreuz zu platzieren',
     crossAddsLines: 'Fügt eine vertikale und eine horizontale Linie hinzu',
     linesAutoExtend: 'Linien werden automatisch bis zu den Rändern verlängert',
     lineClickFirst: 'Ersten Punkt klicken, dann den zweiten',
     lineExactPlacement: 'Linie wird genau an den Klickpunkten platziert (kein Einrasten)',
     lineCancel: 'Esc drücken, um die ausstehende Linie abzubrechen',
+    deleteClickLine: 'Linie anklicken, um sie zu löschen',
+    deleteHoverHint: 'Über eine Linie fahren, um zu sehen, welche entfernt wird',
     dragHandlesHint: 'Ziehe die Randgriffe, um eine vertikale oder horizontale Linie hinzuzufügen',
     intersectionPointsAppear: 'Schnittpunkte erscheinen automatisch',
     invalidImage: 'Bitte eine Bilddatei auswählen',
