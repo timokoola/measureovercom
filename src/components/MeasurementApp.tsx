@@ -212,6 +212,7 @@ export function MeasurementApp() {
                     adjustments={adjustments}
                     paperSize={paperSize}
                     gridSettings={gridSettings}
+                    lines={lines}
                     mode={mode}
                     onModeChange={setMode}
                     onIntersectionsChange={setIntersections}

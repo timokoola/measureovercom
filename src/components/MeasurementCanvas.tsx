@@ -12,10 +12,11 @@ interface MeasurementCanvasProps {
   adjustments: ImageAdjustments;
   paperSize: PaperSize;
   gridSettings: GridSettings;
+  lines: Line[];
   mode: 'cross' | 'line' | 'delete';
   onModeChange?: (mode: 'cross' | 'line' | 'delete') => void;
   onIntersectionsChange: (points: Point[]) => void;
-  onLinesChange?: (lines: Line[]) => void;
+  onLinesChange: (lines: Line[]) => void;
 }
 
 export function MeasurementCanvas({
@@ -23,13 +24,13 @@ export function MeasurementCanvas({
   adjustments,
   paperSize,
   gridSettings,
+  lines,
   mode: externalMode,
   onModeChange,
   onIntersectionsChange,
   onLinesChange,
 }: MeasurementCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [lines, setLines] = useState<Line[]>([]);
   const [mode, setMode] = useState<'cross' | 'line' | 'delete'>(externalMode || 'cross');
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState<{ start: Point; end: Point } | null>(null);
@@ -64,12 +65,9 @@ export function MeasurementCanvas({
     setDragPos(null);
   }, [mode]);
 
-  // Notify parent of line changes
-  useEffect(() => {
-    if (onLinesChange) {
-      onLinesChange(lines);
-    }
-  }, [lines, onLinesChange]);
+  const setLines = (nextLines: Line[]) => {
+    onLinesChange(nextLines);
+  };
 
   useEffect(() => {
     if (!image || !canvasRef.current) return;
@@ -223,13 +221,18 @@ export function MeasurementCanvas({
 
   const createLineId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+  const createLine = (start: Point, end: Point): Line => ({
+    id: createLineId(),
+    start,
+    end,
+  });
+
+  const addLines = (newLines: Line[]) => {
+    setLines([...lines, ...newLines]);
+  };
+
   const addLine = (start: Point, end: Point) => {
-    const newLine: Line = {
-      id: createLineId(),
-      start,
-      end,
-    };
-    setLines((prev) => [...prev, newLine]);
+    addLines([createLine(start, end)]);
   };
 
   const handleStart = (e: MouseEvent | TouchEvent) => {
@@ -239,8 +242,9 @@ export function MeasurementCanvas({
     if (!canvas) return;
 
     if (mode === 'cross') {
-      addLine({ x: pos.x, y: 0 }, { x: pos.x, y: canvas.height });
-      addLine({ x: 0, y: pos.y }, { x: canvas.width, y: pos.y });
+      const vertical = createLine({ x: pos.x, y: 0 }, { x: pos.x, y: canvas.height });
+      const horizontal = createLine({ x: 0, y: pos.y }, { x: canvas.width, y: pos.y });
+      addLines([vertical, horizontal]);
       return;
     }
 
