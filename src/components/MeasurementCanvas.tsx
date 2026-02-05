@@ -10,8 +10,8 @@ interface MeasurementCanvasProps {
   adjustments: ImageAdjustments;
   paperSize: PaperSize;
   gridSettings: GridSettings;
-  mode: 'cross' | 'line' | 'drag';
-  onModeChange?: (mode: 'cross' | 'line' | 'drag') => void;
+  mode: 'cross' | 'line';
+  onModeChange?: (mode: 'cross' | 'line') => void;
   onIntersectionsChange: (points: Point[]) => void;
   onLinesChange?: (lines: Line[]) => void;
 }
@@ -28,7 +28,7 @@ export function MeasurementCanvas({
 }: MeasurementCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [lines, setLines] = useState<Line[]>([]);
-  const [mode, setMode] = useState<'cross' | 'line' | 'drag'>(externalMode || 'cross');
+  const [mode, setMode] = useState<'cross' | 'line'>(externalMode || 'cross');
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState<{ start: Point; end: Point } | null>(null);
   const [mousePos, setMousePos] = useState<Point | null>(null);
@@ -52,11 +52,10 @@ export function MeasurementCanvas({
       setCurrentLine(null);
       setMousePos(null);
     }
-    if (mode !== 'drag') {
-      setIsDraggingHandle(false);
-      setDragAxis(null);
-      setDragPos(null);
-    }
+    // Drag handles are always available; reset active drag when switching modes
+    setIsDraggingHandle(false);
+    setDragAxis(null);
+    setDragPos(null);
   }, [mode]);
 
   // Notify parent of line changes
@@ -269,7 +268,6 @@ export function MeasurementCanvas({
 
   const handleHandleStart = (axis: 'x' | 'y') => (e: MouseEvent | TouchEvent) => {
     e.preventDefault();
-    if (mode !== 'drag') return;
     const pos = getMousePos(e);
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -388,9 +386,7 @@ export function MeasurementCanvas({
               <p class="text-xs text-gray-600 dark:text-gray-400">
                 {mode === 'cross'
                   ? 'Cross mode: Click to add vertical + horizontal lines'
-                  : mode === 'line'
-                  ? 'Line mode: Click two points to place a line'
-                  : 'Drag mode: Pull from edges to add straight lines'}
+                  : 'Line mode: Click two points to place a line'}
               </p>
             </div>
           </div>
@@ -450,33 +446,6 @@ export function MeasurementCanvas({
                   />
                 </svg>
                 Line
-              </button>
-              <button
-                onClick={() => {
-                  setMode('drag');
-                  onModeChange?.('drag');
-                }}
-                class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  mode === 'drag'
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                }`}
-                aria-label="Drag mode"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 2v4m0 12v4m-4-10h8m-8 0l2-2m-2 2l2 2m8-2l-2-2m2 2l-2 2"
-                  />
-                </svg>
-                Drag
               </button>
             </div>
             {lines.length > 0 && (
@@ -551,13 +520,8 @@ export function MeasurementCanvas({
                       <li>Line is placed exactly where you click (no snapping)</li>
                       <li>Press <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Esc</kbd> to cancel the pending line</li>
                     </>
-                  ) : (
-                    <>
-                      <li>Drag from the left/right handle to add a vertical line</li>
-                      <li>Drag from the top/bottom handle to add a horizontal line</li>
-                      <li>Release to place the line</li>
-                    </>
-                  )}
+                  ) : null}
+                  <li>Drag edge handles to add a vertical or horizontal line</li>
                   <li>Intersection points appear automatically</li>
                 </ul>
               </div>
@@ -580,9 +544,7 @@ export function MeasurementCanvas({
           onTouchMove={handleMove}
           onTouchEnd={handleEnd}
           onTouchCancel={handleEnd}
-          class={`rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
-            mode === 'drag' ? 'cursor-default' : 'cursor-crosshair'
-          }`}
+          class={`rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all cursor-crosshair`}
           style={{
             touchAction: 'none',
             maxWidth: '100%',
@@ -595,42 +557,40 @@ export function MeasurementCanvas({
           tabIndex={0}
           aria-label="Measurement canvas - add lines using the selected mode. Press Escape to clear all lines."
         />
-        {mode === 'drag' && (
-          <>
-            <div class="absolute inset-x-0 top-1 flex items-center justify-center pointer-events-none">
-              <div
-                class="w-16 h-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-row-resize"
-                onMouseDown={handleHandleStart('y')}
-                onTouchStart={handleHandleStart('y')}
-                aria-label="Drag to add horizontal line (top)"
-              />
-            </div>
-            <div class="absolute inset-x-0 bottom-1 flex items-center justify-center pointer-events-none">
-              <div
-                class="w-16 h-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-row-resize"
-                onMouseDown={handleHandleStart('y')}
-                onTouchStart={handleHandleStart('y')}
-                aria-label="Drag to add horizontal line (bottom)"
-              />
-            </div>
-            <div class="absolute inset-y-0 left-1 flex items-center justify-center pointer-events-none">
-              <div
-                class="h-16 w-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-col-resize"
-                onMouseDown={handleHandleStart('x')}
-                onTouchStart={handleHandleStart('x')}
-                aria-label="Drag to add vertical line (left)"
-              />
-            </div>
-            <div class="absolute inset-y-0 right-1 flex items-center justify-center pointer-events-none">
-              <div
-                class="h-16 w-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-col-resize"
-                onMouseDown={handleHandleStart('x')}
-                onTouchStart={handleHandleStart('x')}
-                aria-label="Drag to add vertical line (right)"
-              />
-            </div>
-          </>
-        )}
+        <>
+          <div class="absolute inset-x-0 top-1 flex items-center justify-center pointer-events-none">
+            <div
+              class="w-16 h-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-row-resize"
+              onMouseDown={handleHandleStart('y')}
+              onTouchStart={handleHandleStart('y')}
+              aria-label="Drag to add horizontal line (top)"
+            />
+          </div>
+          <div class="absolute inset-x-0 bottom-1 flex items-center justify-center pointer-events-none">
+            <div
+              class="w-16 h-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-row-resize"
+              onMouseDown={handleHandleStart('y')}
+              onTouchStart={handleHandleStart('y')}
+              aria-label="Drag to add horizontal line (bottom)"
+            />
+          </div>
+          <div class="absolute inset-y-0 left-1 flex items-center justify-center pointer-events-none">
+            <div
+              class="h-16 w-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-col-resize"
+              onMouseDown={handleHandleStart('x')}
+              onTouchStart={handleHandleStart('x')}
+              aria-label="Drag to add vertical line (left)"
+            />
+          </div>
+          <div class="absolute inset-y-0 right-1 flex items-center justify-center pointer-events-none">
+            <div
+              class="h-16 w-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-col-resize"
+              onMouseDown={handleHandleStart('x')}
+              onTouchStart={handleHandleStart('x')}
+              aria-label="Drag to add vertical line (right)"
+            />
+          </div>
+        </>
       </div>
       <div class="sr-only" aria-live="polite" aria-atomic="true">
         {lines.length === 0
