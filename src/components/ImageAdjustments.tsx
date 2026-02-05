@@ -1,5 +1,6 @@
 import { useRef, useCallback } from 'preact/hooks';
 import type { ImageAdjustments } from '../types';
+import { t } from '../utils/i18n';
 
 interface ImageAdjustmentsProps {
   adjustments: ImageAdjustments;
@@ -38,7 +39,7 @@ export function ImageAdjustments({
   return (
     <div class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
       <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        Image Adjustments
+        {t('imageAdjustments')}
       </h3>
 
       <div class="space-y-5">
@@ -52,7 +53,7 @@ export function ImageAdjustments({
             class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded border-gray-300 dark:border-gray-600"
           />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
-            Grayscale
+            {t('grayscale')}
           </span>
         </label>
 
@@ -62,7 +63,7 @@ export function ImageAdjustments({
               for="brightness"
               class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Brightness
+              {t('brightness')}
             </label>
             <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
               {adjustments.brightness}%
@@ -78,7 +79,7 @@ export function ImageAdjustments({
               updateAdjustment('brightness', parseInt(e.currentTarget.value), false)
             }
             class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
-            aria-label="Adjust brightness"
+            aria-label={t('brightnessAria')}
           />
         </div>
 
@@ -88,7 +89,7 @@ export function ImageAdjustments({
               for="contrast"
               class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Contrast
+              {t('contrast')}
             </label>
             <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
               {adjustments.contrast}%
@@ -104,7 +105,7 @@ export function ImageAdjustments({
               updateAdjustment('contrast', parseInt(e.currentTarget.value), false)
             }
             class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
-            aria-label="Adjust contrast"
+            aria-label={t('contrastAria')}
           />
         </div>
 
@@ -114,7 +115,7 @@ export function ImageAdjustments({
               for="rotation"
               class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Rotation
+              {t('rotation')}
             </label>
             <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
               {adjustments.rotation}°
@@ -131,29 +132,29 @@ export function ImageAdjustments({
               updateAdjustment('rotation', parseInt(e.currentTarget.value), false)
             }
             class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
-            aria-label="Rotate image"
+            aria-label={t('rotationAria')}
           />
           <div class="flex gap-2">
             <button
               onClick={() => updateAdjustment('rotation', (adjustments.rotation - 90 + 360) % 360, true)}
               class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-              aria-label="Rotate 90° counter-clockwise"
+              aria-label={t('rotateCcwAria')}
             >
               ↺ -90°
             </button>
             <button
               onClick={() => updateAdjustment('rotation', (adjustments.rotation + 90) % 360, true)}
               class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-              aria-label="Rotate 90° clockwise"
+              aria-label={t('rotateCwAria')}
             >
               ↻ +90°
             </button>
             <button
               onClick={() => updateAdjustment('rotation', 0, true)}
               class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-              aria-label="Reset rotation"
+              aria-label={t('resetRotationAria')}
             >
-              Reset
+              {t('reset')}
             </button>
           </div>
         </div>
@@ -172,12 +173,12 @@ export function ImageAdjustments({
               class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded border-gray-300 dark:border-gray-600"
             />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
-              Enable Crop
+              {t('enableCrop')}
             </span>
           </label>
           {adjustments.crop.enabled && (
             <div class="pl-8 space-y-3 text-xs text-gray-600 dark:text-gray-400">
-              <p>Note: Crop functionality is basic. For advanced cropping, use image editing software before uploading.</p>
+              <p>{t('cropNote')}</p>
             </div>
           )}
         </div>

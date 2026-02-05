@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { getStoredTheme, saveTheme } from '../utils/theme';
 import type { Theme } from '../types';
+import { t } from '../utils/i18n';
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() => getStoredTheme());
@@ -36,17 +37,17 @@ export function ThemeToggle() {
     <div class="flex gap-2 items-center">
       <button
         onClick={toggleMode}
-        aria-label={`Switch to ${theme.mode === 'light' ? 'dark' : 'light'} mode`}
+        aria-label={`${t('switchToMode')} ${theme.mode === 'light' ? t('darkMode') : t('lightMode')}`}
         class="p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-gray-400 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all shadow-sm hover:shadow-md"
-        title={`Switch to ${theme.mode === 'light' ? 'dark' : 'light'} mode`}
+        title={`${t('switchToMode')} ${theme.mode === 'light' ? t('darkMode') : t('lightMode')}`}
       >
         {theme.mode === 'light' ? '🌙' : '☀️'}
       </button>
       <button
         onClick={toggleColor}
-        aria-label={`Switch to ${theme.color === 'default' ? 'high contrast' : 'default'} color mode`}
+        aria-label={`${t('switchColorMode')} ${theme.color === 'default' ? t('colorModeHighContrast') : t('colorModeDefault')}`}
         class="p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-gray-400 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all shadow-sm hover:shadow-md"
-        title={`Switch to ${theme.color === 'default' ? 'high contrast' : 'default'} color mode`}
+        title={`${t('switchColorMode')} ${theme.color === 'default' ? t('colorModeHighContrast') : t('colorModeDefault')}`}
       >
         {theme.color === 'default' ? '🎨' : '🌈'}
       </button>

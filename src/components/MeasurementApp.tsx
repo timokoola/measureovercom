@@ -74,6 +74,15 @@ export function MeasurementApp() {
     applyTheme(theme);
   }, []);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.title = t('pageTitle');
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', t('pageDescription'));
+    }
+  }, [lang]);
+
   const handleImageLoad = (img: HTMLImageElement) => {
     setImage(img);
     setLines([]);
@@ -152,7 +161,7 @@ export function MeasurementApp() {
       const paperName = paperSize.replace('-', '_');
       downloadImage(dataUrl, `measureover-${paperName}-${Date.now()}.png`);
     } catch (error) {
-      alert(t('exportImage') + ' - ' + (error instanceof Error ? error.message : 'Error'));
+      alert(t('exportImage') + ' - ' + (error instanceof Error ? error.message : t('error')));
       console.error(error);
     }
   };
@@ -287,7 +296,7 @@ export function MeasurementApp() {
         <footer class="max-w-7xl mx-auto mt-16 pt-8 pb-8 border-t border-gray-200 dark:border-gray-800">
           <div class="flex flex-col items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
             <p>{t('tagline')}</p>
-            <p class="text-xs">© 2026 Timo Koola. All rights reserved.</p>
+            <p class="text-xs">{t('footerRights')}</p>
           </div>
         </footer>
       </div>

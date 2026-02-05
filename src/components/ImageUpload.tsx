@@ -20,7 +20,7 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      alert(t('invalidImage'));
       return;
     }
 
@@ -79,7 +79,7 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
         accept="image/*"
         onChange={handleInputChange}
         class="hidden"
-        aria-label="Upload image file"
+        aria-label={t('uploadImageAria')}
       />
       <div class="mb-6">
         <svg

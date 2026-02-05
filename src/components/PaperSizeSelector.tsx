@@ -1,21 +1,22 @@
 import type { PaperSize } from '../types';
+import { t, type Translations } from '../utils/i18n';
 
 interface PaperSizeSelectorProps {
   value: PaperSize;
   onChange: (size: PaperSize) => void;
 }
 
-const PAPER_LABELS: Record<PaperSize, string> = {
-  a6: 'A6 (105 × 148 mm)',
-  a5: 'A5 (148 × 210 mm)',
-  a4: 'A4 (210 × 297 mm)',
-  a3: 'A3 (297 × 420 mm)',
-  a2: 'A2 (420 × 594 mm)',
-  a1: 'A1 (594 × 841 mm)',
-  a0: 'A0 (841 × 1189 mm)',
-  'us-letter': 'US Letter (8.5 × 11 in)',
-  'us-legal': 'US Legal (8.5 × 14 in)',
-  'us-tabloid': 'US Tabloid (11 × 17 in)',
+const PAPER_KEYS: Record<PaperSize, keyof Translations> = {
+  a6: 'a6',
+  a5: 'a5',
+  a4: 'a4',
+  a3: 'a3',
+  a2: 'a2',
+  a1: 'a1',
+  a0: 'a0',
+  'us-letter': 'usLetter',
+  'us-legal': 'usLegal',
+  'us-tabloid': 'usTabloid',
 };
 
 export function PaperSizeSelector({ value, onChange }: PaperSizeSelectorProps) {
@@ -25,24 +26,24 @@ export function PaperSizeSelector({ value, onChange }: PaperSizeSelectorProps) {
         for="paper-size"
         class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3"
       >
-        Paper Size
+        {t('paperSize')}
       </label>
       <select
         id="paper-size"
         value={value}
         onChange={(e) => onChange(e.currentTarget.value as PaperSize)}
         class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:border-transparent transition-all shadow-sm hover:shadow-md"
-        aria-label="Select paper size for coordinate scaling"
+        aria-label={t('paperSizeAria')}
         aria-describedby="paper-size-description"
       >
-        {(Object.keys(PAPER_LABELS) as PaperSize[]).map((size) => (
+        {(Object.keys(PAPER_KEYS) as PaperSize[]).map((size) => (
           <option key={size} value={size}>
-            {PAPER_LABELS[size]}
+            {t(PAPER_KEYS[size])}
           </option>
         ))}
       </select>
       <p id="paper-size-description" class="sr-only">
-        Coordinates will be scaled to match the selected paper size
+        {t('paperSizeDescription')}
       </p>
     </div>
   );

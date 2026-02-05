@@ -1,6 +1,7 @@
 import type { Point, PaperSize, MeasurementUnit } from '../types';
 import { convertPixelsToMM } from '../utils/paperSizes';
 import { formatValue } from '../utils/units';
+import { t } from '../utils/i18n';
 
 interface CoordinateDisplayProps {
   points: Point[];
@@ -38,10 +39,10 @@ export function CoordinateDisplay({
           </div>
           <div>
             <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
-              Measurement Coordinates
+              {t('measurementCoordinates')}
             </h3>
             <p class="text-sm text-gray-500 dark:text-gray-500">
-              Draw lines to see intersection coordinates
+              {t('drawLinesToSeeCoordinates')}
             </p>
           </div>
         </div>
@@ -70,15 +71,15 @@ export function CoordinateDisplay({
           </div>
           <div>
             <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
-              Measurement Coordinates
+              {t('measurementCoordinates')}
             </h3>
             <p class="text-sm text-gray-500 dark:text-gray-500">
-              Intersection points in millimeters
+              {t('intersectionPoints')} {t(unit === 'mm' ? 'millimeters' : unit === 'cm' ? 'centimeters' : 'inches')}
             </p>
           </div>
         </div>
         <span class="text-sm font-bold text-burnt-orange bg-burnt-orange/10 dark:bg-burnt-orange/20 px-4 py-2 rounded-lg">
-          {points.length} {points.length === 1 ? 'point' : 'points'}
+          {points.length} {points.length === 1 ? t('point') : t('points')}
         </span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -102,19 +103,19 @@ export function CoordinateDisplay({
             >
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  Point {index + 1}
+                  {t('pointLabel')} {index + 1}
                 </span>
                 <div class="w-2 h-2 bg-burnt-orange rounded-full"></div>
               </div>
               <div class="space-y-1">
                 <div class="flex items-baseline gap-2">
-                  <span class="text-xs text-gray-500 dark:text-gray-500 font-medium">X:</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-500 font-medium">{t('xLabel')}</span>
                   <span class="text-lg font-bold font-mono text-gray-900 dark:text-gray-100">
                     {formatValue(xMM, unit)}
                   </span>
                 </div>
                 <div class="flex items-baseline gap-2">
-                  <span class="text-xs text-gray-500 dark:text-gray-500 font-medium">Y:</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-500 font-medium">{t('yLabel')}</span>
                   <span class="text-lg font-bold font-mono text-gray-900 dark:text-gray-100">
                     {formatValue(yMM, unit)}
                   </span>

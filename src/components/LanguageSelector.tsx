@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { setLanguage, getLanguage, type Language } from '../utils/i18n';
+import { setLanguage, getLanguage, type Language, t } from '../utils/i18n';
 
 export function LanguageSelector() {
   const [currentLang, setCurrentLang] = useState<Language>(getLanguage());
@@ -19,18 +19,21 @@ export function LanguageSelector() {
   return (
     <div class="flex items-center gap-2">
       <label for="language-select" class="sr-only">
-        Select language
+        {t('selectLanguage')}
       </label>
       <select
         id="language-select"
         value={currentLang}
         onChange={(e) => handleChange(e.currentTarget.value as Language)}
         class="px-2 py-1 text-xs bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 rounded text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2"
-        aria-label="Select language"
+        aria-label={t('selectLanguage')}
       >
         <option value="en">🇬🇧 English</option>
         <option value="fi">🇫🇮 Suomi</option>
         <option value="sv">🇸🇪 Svenska</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="de">🇩🇪 Deutsch</option>
       </select>
     </div>
   );

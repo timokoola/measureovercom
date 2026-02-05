@@ -4,6 +4,7 @@ import { findAllIntersections } from '../utils/math';
 import { applyImageFilters } from '../utils/imageFilters';
 import { drawGrid, calculateGridSpacing } from '../utils/grid';
 import { extendLineToEdges } from '../utils/lineExtension';
+import { t } from '../utils/i18n';
 
 interface MeasurementCanvasProps {
   image: HTMLImageElement | null;
@@ -358,8 +359,10 @@ export function MeasurementCanvas({
     };
   }, [lines.length, isDrawing]);
 
+  const [lineCancelStart, lineCancelEnd] = t('lineCancel').split('Esc');
+
   return (
-    <div class="relative" role="region" aria-label="Measurement canvas">
+    <div class="relative" role="region" aria-label={t('measurementCanvasLabel')}>
       {/* Drawing Toolbar */}
       <div class="mb-4 bg-white dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
         <div class="flex items-center justify-between flex-wrap gap-4">
@@ -381,12 +384,10 @@ export function MeasurementCanvas({
             </div>
             <div>
               <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Measurement Tool
+                {t('measurementTool')}
               </h3>
               <p class="text-xs text-gray-600 dark:text-gray-400">
-                {mode === 'cross'
-                  ? 'Cross mode: Click to add vertical + horizontal lines'
-                  : 'Line mode: Click two points to place a line'}
+                {mode === 'cross' ? t('crossMode') : t('lineMode')}
               </p>
             </div>
           </div>
@@ -403,7 +404,7 @@ export function MeasurementCanvas({
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
-                aria-label="Cross mode"
+                aria-label={`${t('switchToMode')} ${t('cross')}`}
               >
                 <svg
                   class="w-3.5 h-3.5"
@@ -418,7 +419,7 @@ export function MeasurementCanvas({
                     d="M12 5v14m-7-7h14"
                   />
                 </svg>
-                Cross
+                {t('cross')}
               </button>
               <button
                 onClick={() => {
@@ -430,7 +431,7 @@ export function MeasurementCanvas({
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
-                aria-label="Line mode"
+                aria-label={`${t('switchToMode')} ${t('line')}`}
               >
                 <svg
                   class="w-3.5 h-3.5"
@@ -445,18 +446,19 @@ export function MeasurementCanvas({
                     d="M4 20L20 4"
                   />
                 </svg>
-                Line
+                {t('line')}
               </button>
             </div>
             {lines.length > 0 && (
               <>
                 <span class="text-sm text-gray-600 dark:text-gray-400">
-                  {lines.length} {lines.length === 1 ? 'line' : 'lines'}
+                  {lines.length}{' '}
+                  {lines.length === 1 ? t('lineCount') : t('lineCountPlural')}
                 </span>
                 <button
                   onClick={clearLines}
                   class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-red-300 dark:hover:border-red-700 hover:text-red-600 dark:hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm font-medium transition-all"
-                  aria-label="Clear all lines"
+                  aria-label={t('clearAll')}
                 >
                   <svg
                     class="w-4 h-4"
@@ -471,14 +473,14 @@ export function MeasurementCanvas({
                       d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
-                  Clear All
+                  {t('clearAll')}
                 </button>
               </>
             )}
             {isDrawing && (
               <div class="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-md">
                 <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <span class="text-xs font-medium text-blue-600 dark:text-blue-400">Line pending...</span>
+                <span class="text-xs font-medium text-blue-600 dark:text-blue-400">{t('linePending')}</span>
               </div>
             )}
             {isDraggingHandle && (
@@ -506,23 +508,29 @@ export function MeasurementCanvas({
                 />
               </svg>
               <div>
-                <p class="font-medium mb-1">How to draw:</p>
+                <p class="font-medium mb-1">
+                  {mode === 'cross' ? t('crossInstructionsTitle') : t('lineInstructionsTitle')}
+                </p>
                 <ul class="list-disc list-inside space-y-0.5 ml-2">
                   {mode === 'cross' ? (
                     <>
-                      <li>Click once to place a crosshair at that point</li>
-                      <li>Adds one vertical and one horizontal line</li>
-                      <li>Lines automatically extend to canvas edges</li>
+                      <li>{t('crossClickOnce')}</li>
+                      <li>{t('crossAddsLines')}</li>
+                      <li>{t('linesAutoExtend')}</li>
                     </>
                   ) : mode === 'line' ? (
                     <>
-                      <li>Click the first point, then click the second point</li>
-                      <li>Line is placed exactly where you click (no snapping)</li>
-                      <li>Press <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Esc</kbd> to cancel the pending line</li>
+                      <li>{t('lineClickFirst')}</li>
+                      <li>{t('lineExactPlacement')}</li>
+                      <li>
+                        {lineCancelStart}
+                        <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Esc</kbd>
+                        {lineCancelEnd || ''}
+                      </li>
                     </>
                   ) : null}
-                  <li>Drag edge handles to add a vertical or horizontal line</li>
-                  <li>Intersection points appear automatically</li>
+                  <li>{t('dragHandlesHint')}</li>
+                  <li>{t('intersectionPointsAppear')}</li>
                 </ul>
               </div>
             </div>
@@ -555,7 +563,7 @@ export function MeasurementCanvas({
             margin: '0 auto',
           }}
           tabIndex={0}
-          aria-label="Measurement canvas - add lines using the selected mode. Press Escape to clear all lines."
+          aria-label={t('measurementCanvasLabel')}
         />
         <>
           <div class="absolute inset-x-0 top-1 flex items-center justify-center pointer-events-none">
@@ -563,7 +571,7 @@ export function MeasurementCanvas({
               class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-sm"
               onMouseDown={handleHandleStart('y')}
               onTouchStart={handleHandleStart('y')}
-              aria-label="Drag to add horizontal line (top)"
+              aria-label={t('dragHandleTop')}
               style={{
                 backgroundColor: '#1d4ed8',
                 backgroundImage:
@@ -576,7 +584,7 @@ export function MeasurementCanvas({
               class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-sm"
               onMouseDown={handleHandleStart('y')}
               onTouchStart={handleHandleStart('y')}
-              aria-label="Drag to add horizontal line (bottom)"
+              aria-label={t('dragHandleBottom')}
               style={{
                 backgroundColor: '#1d4ed8',
                 backgroundImage:
@@ -589,7 +597,7 @@ export function MeasurementCanvas({
               class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-sm"
               onMouseDown={handleHandleStart('x')}
               onTouchStart={handleHandleStart('x')}
-              aria-label="Drag to add vertical line (left)"
+              aria-label={t('dragHandleLeft')}
               style={{
                 backgroundColor: '#1d4ed8',
                 backgroundImage:
@@ -602,7 +610,7 @@ export function MeasurementCanvas({
               class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-sm"
               onMouseDown={handleHandleStart('x')}
               onTouchStart={handleHandleStart('x')}
-              aria-label="Drag to add vertical line (right)"
+              aria-label={t('dragHandleRight')}
               style={{
                 backgroundColor: '#1d4ed8',
                 backgroundImage:
@@ -614,8 +622,8 @@ export function MeasurementCanvas({
       </div>
       <div class="sr-only" aria-live="polite" aria-atomic="true">
         {lines.length === 0
-          ? 'No lines drawn'
-          : `${lines.length} line${lines.length === 1 ? '' : 's'} drawn`}
+          ? t('noLinesDrawn')
+          : `${lines.length} ${t('linesDrawn')}`}
       </div>
     </div>
   );
