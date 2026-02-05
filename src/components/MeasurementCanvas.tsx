@@ -2,17 +2,16 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Line, Point, ImageAdjustments, PaperSize, GridSettings } from '../types';
 import { findAllIntersections } from '../utils/math';
 import { applyImageFilters } from '../utils/imageFilters';
-import { drawGrid, snapToAxis, calculateGridSpacing } from '../utils/grid';
+import { drawGrid, calculateGridSpacing } from '../utils/grid';
 import { extendLineToEdges } from '../utils/lineExtension';
-import { findLineAtPoint, moveLine } from '../utils/lineHitDetection';
 
 interface MeasurementCanvasProps {
   image: HTMLImageElement | null;
   adjustments: ImageAdjustments;
   paperSize: PaperSize;
   gridSettings: GridSettings;
-  mode: 'draw' | 'move' | 'delete';
-  onModeChange?: (mode: 'draw' | 'move' | 'delete') => void;
+  mode: 'cross' | 'line' | 'drag';
+  onModeChange?: (mode: 'cross' | 'line' | 'drag') => void;
   onIntersectionsChange: (points: Point[]) => void;
   onLinesChange?: (lines: Line[]) => void;
 }
@@ -29,20 +28,15 @@ export function MeasurementCanvas({
 }: MeasurementCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [lines, setLines] = useState<Line[]>([]);
-  const [mode, setMode] = useState<'draw' | 'move' | 'delete'>(externalMode || 'draw');
+  const [mode, setMode] = useState<'cross' | 'line' | 'drag'>(externalMode || 'cross');
   const [isDrawing, setIsDrawing] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
-  const [movingLineId, setMovingLineId] = useState<string | null>(null);
-  const [moveOffset, setMoveOffset] = useState<Point | null>(null);
-  const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
-  const [currentLine, setCurrentLine] = useState<{ start: Point; end: Point } | null>(
-    null
-  );
+  const [currentLine, setCurrentLine] = useState<{ start: Point; end: Point } | null>(null);
   const [mousePos, setMousePos] = useState<Point | null>(null);
-  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [pendingLineStart, setPendingLineStart] = useState<Point | null>(null);
+  const [isDraggingHandle, setIsDraggingHandle] = useState(false);
+  const [dragAxis, setDragAxis] = useState<'x' | 'y' | null>(null);
+  const [dragPos, setDragPos] = useState<number | null>(null);
   const gridSpacingRef = useRef<number>(50);
-  const longPressTimerRef = useRef<number | null>(null);
-  const touchStartPosRef = useRef<Point | null>(null);
 
   // Sync external mode changes
   useEffect(() => {
@@ -50,6 +44,20 @@ export function MeasurementCanvas({
       setMode(externalMode);
     }
   }, [externalMode]);
+
+  useEffect(() => {
+    if (mode !== 'line') {
+      setPendingLineStart(null);
+      setIsDrawing(false);
+      setCurrentLine(null);
+      setMousePos(null);
+    }
+    if (mode !== 'drag') {
+      setIsDraggingHandle(false);
+      setDragAxis(null);
+      setDragPos(null);
+    }
+  }, [mode]);
 
   // Notify parent of line changes
   useEffect(() => {
@@ -68,13 +76,16 @@ export function MeasurementCanvas({
     // Detect mobile once for this render
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+    const imageWidth = image.naturalWidth || image.width;
+    const imageHeight = image.naturalHeight || image.height;
+
     // Set canvas size to match image
-    canvas.width = image.width;
-    canvas.height = image.height;
+    canvas.width = imageWidth;
+    canvas.height = imageHeight;
 
     // Calculate grid spacing based on image dimensions
-    if (image.width > 0 && image.height > 0) {
-      gridSpacingRef.current = calculateGridSpacing(image.width, image.height);
+    if (imageWidth > 0 && imageHeight > 0) {
+      gridSpacingRef.current = calculateGridSpacing(imageWidth, imageHeight);
     }
 
     // Draw image
@@ -104,7 +115,6 @@ export function MeasurementCanvas({
     // Draw lines - use blue color for better color-blind accessibility
     // Blue (#0066cc) is distinguishable for all types of color blindness
     const baseLineWidth = gridSettings.lineThickness;
-    const hoverLineWidth = Math.round(gridSettings.lineThickness * 1.5); // 50% thicker when hovered
     
     ctx.strokeStyle = '#0066cc';
     ctx.lineWidth = baseLineWidth;
@@ -118,53 +128,27 @@ export function MeasurementCanvas({
       ctx.moveTo(extended.start.x, extended.start.y);
       ctx.lineTo(extended.end.x, extended.end.y);
       
-      // Highlight hovered line in move/delete mode
-      if ((mode === 'move' || mode === 'delete') && hoveredLineId === line.id) {
-        ctx.strokeStyle = mode === 'delete' ? '#ff4444' : '#0088ff';
-        ctx.lineWidth = hoverLineWidth;
-      } else {
-        ctx.strokeStyle = '#0066cc';
-        ctx.lineWidth = baseLineWidth;
-      }
-      
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = baseLineWidth;
       ctx.stroke();
     });
 
-    // Draw current line being drawn
-    if (currentLine && mousePos) {
-      // On mobile, ALWAYS snap to horizontal/vertical (no diagonal lines)
-      // Use very large threshold on mobile to force snapping
-      const threshold = isMobileDevice ? 999 : 8; // Force snapping on mobile
-      const forceSnap = isMobileDevice ? true : snapEnabled; // Always snap on mobile
-      const snappedEnd = snapToAxis(currentLine.start, mousePos, threshold, forceSnap);
-      
-      // Create temporary line for extension
+    // Draw current preview line (line or drag mode)
+    if (currentLine) {
       const tempLine: Line = {
         id: 'temp',
         start: currentLine.start,
-        end: snappedEnd,
+        end: currentLine.end,
       };
-      // Extend to edges
       const extended = extendLineToEdges(tempLine, canvas.width, canvas.height);
       ctx.beginPath();
       ctx.moveTo(extended.start.x, extended.start.y);
       ctx.strokeStyle = '#0066cc';
-      ctx.lineWidth = gridSettings.lineThickness; // Use configurable thickness
+      ctx.lineWidth = gridSettings.lineThickness;
       ctx.setLineDash([8, 4]);
       ctx.lineTo(extended.end.x, extended.end.y);
       ctx.stroke();
       ctx.setLineDash([]);
-      
-      // Show snap indicator if snapping occurred (or always on mobile)
-      if ((forceSnap && isMobileDevice) || (snapEnabled && (snappedEnd.x !== mousePos.x || snappedEnd.y !== mousePos.y))) {
-        ctx.beginPath();
-        ctx.arc(snappedEnd.x, snappedEnd.y, isMobileDevice ? 10 : 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#ff8800';
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = isMobileDevice ? 3 : 2;
-        ctx.stroke();
-      }
     }
 
     // Calculate intersections from extended lines
@@ -196,7 +180,7 @@ export function MeasurementCanvas({
 
     // Notify parent of intersections
     onIntersectionsChange(intersections);
-  }, [image, lines, adjustments, currentLine, mousePos, gridSettings, isMoving, mode, hoveredLineId, onIntersectionsChange]);
+  }, [image, lines, adjustments, currentLine, mousePos, gridSettings, mode, onIntersectionsChange]);
 
   const getMousePos = (e: MouseEvent | TouchEvent): Point => {
     const canvas = canvasRef.current;
@@ -226,156 +210,130 @@ export function MeasurementCanvas({
     };
   };
 
+  const createLineId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  const addLine = (start: Point, end: Point) => {
+    const newLine: Line = {
+      id: createLineId(),
+      start,
+      end,
+    };
+    setLines((prev) => [...prev, newLine]);
+  };
+
   const handleStart = (e: MouseEvent | TouchEvent) => {
     e.preventDefault();
     const pos = getMousePos(e);
     const canvas = canvasRef.current;
-    
     if (!canvas) return;
-    
-    const isTouch = 'touches' in e;
-    touchStartPosRef.current = pos;
-    
-    if (mode === 'delete') {
-      // In delete mode, delete the line if clicked
-      const hitResult = findLineAtPoint(pos, lines, canvas.width, canvas.height);
-      if (hitResult) {
-        setLines(lines.filter((l) => l.id !== hitResult.lineId));
-        setHoveredLineId(null);
+
+    if (mode === 'cross') {
+      addLine({ x: pos.x, y: 0 }, { x: pos.x, y: canvas.height });
+      addLine({ x: 0, y: pos.y }, { x: canvas.width, y: pos.y });
+      return;
+    }
+
+    if (mode === 'line') {
+      if (!pendingLineStart) {
+        setPendingLineStart(pos);
+        setIsDrawing(true);
+        setCurrentLine({ start: pos, end: pos });
+        setMousePos(pos);
+        return;
       }
-    } else if (mode === 'move') {
-      // In move mode, check if clicking on a line
-      const hitResult = findLineAtPoint(pos, lines, canvas.width, canvas.height);
-      
-      if (hitResult) {
-        if (isTouch) {
-          // On touch devices, require a short delay to prevent accidental moves
-          longPressTimerRef.current = window.setTimeout(() => {
-            setIsMoving(true);
-            setMovingLineId(hitResult.lineId);
-            setMoveOffset(hitResult.offset);
-            setMousePos(pos);
-            setHoveredLineId(null);
-          }, 200); // 200ms delay for touch
-        } else {
-          // On mouse, start moving immediately
-          setIsMoving(true);
-          setMovingLineId(hitResult.lineId);
-          setMoveOffset(hitResult.offset);
-          setMousePos(pos);
-          setHoveredLineId(null);
-        }
+
+      const dist = Math.hypot(pos.x - pendingLineStart.x, pos.y - pendingLineStart.y);
+      if (dist > 5) {
+        addLine(pendingLineStart, pos);
       }
-    } else {
-      // In draw mode, always start drawing
-      setIsDrawing(true);
-      setCurrentLine({ start: pos, end: pos });
-      setMousePos(pos);
+      setPendingLineStart(null);
+      setIsDrawing(false);
+      setCurrentLine(null);
+      setMousePos(null);
     }
   };
 
   const handleMove = (e: MouseEvent | TouchEvent) => {
     const pos = getMousePos(e);
     setMousePos(pos);
-    const canvas = canvasRef.current;
-    
-    if (!canvas) return;
-    
-    // Cancel long press if user moves too far (on touch)
-    if (longPressTimerRef.current && touchStartPosRef.current) {
-      const dist = Math.sqrt(
-        Math.pow(pos.x - touchStartPosRef.current.x, 2) +
-        Math.pow(pos.y - touchStartPosRef.current.y, 2)
-      );
-      if (dist > 10) {
-        // Moved more than 10 pixels, cancel long press
-        clearTimeout(longPressTimerRef.current);
-        longPressTimerRef.current = null;
-      }
-    }
-    
-    if (isMoving && movingLineId && moveOffset) {
-      e.preventDefault();
-      // Move the line
-      const lineIndex = lines.findIndex((l) => l.id === movingLineId);
-      if (lineIndex !== -1) {
-        const line = lines[lineIndex];
-        const centerX = (line.start.x + line.end.x) / 2;
-        const centerY = (line.start.y + line.end.y) / 2;
-        const newCenterX = pos.x - moveOffset.x;
-        const newCenterY = pos.y - moveOffset.y;
-        const deltaX = newCenterX - centerX;
-        const deltaY = newCenterY - centerY;
-        
-        const updatedLines = [...lines];
-        updatedLines[lineIndex] = moveLine(line, deltaX, deltaY);
-        setLines(updatedLines);
-      }
-    } else if (isDrawing && currentLine) {
-      e.preventDefault();
-      // On mobile, ALWAYS snap to horizontal/vertical (no diagonal lines)
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const isTouch = 'touches' in e || 'changedTouches' in e;
-      const threshold = isMobile ? 999 : (isTouch ? 12 : 8); // Force snapping on mobile
-      const forceSnap = isMobile ? true : snapEnabled; // Always snap on mobile
-      const snappedPos = snapToAxis(currentLine.start, pos, threshold, forceSnap);
-      setCurrentLine({ start: currentLine.start, end: snappedPos });
-    } else if ((mode === 'move' || mode === 'delete') && !isMoving) {
-      // Update hover state in move/delete mode
-      const hitResult = findLineAtPoint(pos, lines, canvas.width, canvas.height);
-      setHoveredLineId(hitResult?.lineId || null);
-    }
+    if (mode !== 'line' || !pendingLineStart) return;
+    e.preventDefault();
+
+    setCurrentLine({ start: pendingLineStart, end: pos });
   };
 
   const handleEnd = (e: MouseEvent | TouchEvent) => {
     e.preventDefault();
-    
-    // Cancel any pending long press
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    
-    if (isMoving) {
-      // Finish moving the line
-      setIsMoving(false);
-      setMovingLineId(null);
-      setMoveOffset(null);
-      setMousePos(null);
-      touchStartPosRef.current = null;
-      return;
-    }
-    
-    if (!isDrawing || !currentLine) {
-      touchStartPosRef.current = null;
-      return;
-    }
-    
-    const pos = getMousePos(e);
-    // On mobile, ALWAYS snap to horizontal/vertical (no diagonal lines)
-    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isTouch = 'touches' in e || 'changedTouches' in e;
-    const threshold = isMobileDevice ? 999 : (isTouch ? 12 : 8); // Force snapping on mobile
-    const forceSnap = isMobileDevice ? true : snapEnabled; // Always snap on mobile
-    const snappedEnd = snapToAxis(currentLine.start, pos, threshold, forceSnap);
-    // Only create line if it has meaningful length
-    const dist = Math.sqrt(
-      Math.pow(snappedEnd.x - currentLine.start.x, 2) +
-        Math.pow(snappedEnd.y - currentLine.start.y, 2)
-    );
-    if (dist > 5) {
-      const newLine: Line = {
-        id: Date.now().toString(),
-        start: currentLine.start,
-        end: snappedEnd,
-      };
-      setLines([...lines, newLine]);
-    }
-    setIsDrawing(false);
-    setCurrentLine(null);
-    setMousePos(null);
-    touchStartPosRef.current = null;
+    if (mode !== 'line') return;
   };
+
+  const handleHandleStart = (axis: 'x' | 'y') => (e: MouseEvent | TouchEvent) => {
+    e.preventDefault();
+    if (mode !== 'drag') return;
+    const pos = getMousePos(e);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const nextPos = axis === 'x' ? pos.x : pos.y;
+    setIsDraggingHandle(true);
+    setDragAxis(axis);
+    setDragPos(nextPos);
+    if (axis === 'x') {
+      setCurrentLine({ start: { x: nextPos, y: 0 }, end: { x: nextPos, y: canvas.height } });
+    } else {
+      setCurrentLine({ start: { x: 0, y: nextPos }, end: { x: canvas.width, y: nextPos } });
+    }
+  };
+
+  useEffect(() => {
+    if (!isDraggingHandle || !dragAxis) return;
+
+    const handleDragMove = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      const pos = getMousePos(e);
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const limit = dragAxis === 'x' ? canvas.width : canvas.height;
+      const raw = dragAxis === 'x' ? pos.x : pos.y;
+      const clamped = Math.max(0, Math.min(raw, limit));
+      setDragPos(clamped);
+      if (dragAxis === 'x') {
+        setCurrentLine({ start: { x: clamped, y: 0 }, end: { x: clamped, y: canvas.height } });
+      } else {
+        setCurrentLine({ start: { x: 0, y: clamped }, end: { x: canvas.width, y: clamped } });
+      }
+    };
+
+    const handleDragEnd = () => {
+      const canvas = canvasRef.current;
+      if (canvas && dragPos !== null) {
+        if (dragAxis === 'x') {
+          addLine({ x: dragPos, y: 0 }, { x: dragPos, y: canvas.height });
+        } else {
+          addLine({ x: 0, y: dragPos }, { x: canvas.width, y: dragPos });
+        }
+      }
+      setIsDraggingHandle(false);
+      setDragAxis(null);
+      setDragPos(null);
+      setCurrentLine(null);
+    };
+
+    window.addEventListener('mousemove', handleDragMove);
+    window.addEventListener('mouseup', handleDragEnd);
+    window.addEventListener('touchmove', handleDragMove, { passive: false });
+    window.addEventListener('touchend', handleDragEnd);
+    window.addEventListener('touchcancel', handleDragEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleDragMove);
+      window.removeEventListener('touchend', handleDragEnd);
+      window.removeEventListener('touchcancel', handleDragEnd);
+    };
+  }, [isDraggingHandle, dragAxis, dragPos]);
 
   const clearLines = () => {
     setLines([]);
@@ -383,34 +341,22 @@ export function MeasurementCanvas({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Toggle snapping with Shift key
-      if (e.key === 'Shift') {
-        setSnapEnabled(false);
-      }
       // Clear lines with Escape key
       if (e.key === 'Escape' && lines.length > 0) {
         clearLines();
       }
-      // Cancel drawing with Escape
+      // Cancel pending line with Escape
       if (e.key === 'Escape' && isDrawing) {
         setIsDrawing(false);
+        setPendingLineStart(null);
         setCurrentLine(null);
         setMousePos(null);
       }
     };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-      // Re-enable snapping when Shift is released
-      if (e.key === 'Shift') {
-        setSnapEnabled(true);
-      }
-    };
-
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
     };
   }, [lines.length, isDrawing]);
 
@@ -440,44 +386,28 @@ export function MeasurementCanvas({
                 Measurement Tool
               </h3>
               <p class="text-xs text-gray-600 dark:text-gray-400">
-                {mode === 'draw' 
-                  ? 'Draw mode: Click and drag to create lines'
-                  : 'Move mode: Click and drag lines to reposition them'}
+                {mode === 'cross'
+                  ? 'Cross mode: Click to add vertical + horizontal lines'
+                  : mode === 'line'
+                  ? 'Line mode: Click two points to place a line'
+                  : 'Drag mode: Pull from edges to add straight lines'}
               </p>
             </div>
           </div>
           <div class="flex items-center gap-3">
-            {/* Snap Toggle */}
-            {mode === 'draw' && (
-              <button
-                onClick={() => setSnapEnabled(!snapEnabled)}
-                class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all border ${
-                  snapEnabled
-                    ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
-                    : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400'
-                }`}
-                aria-label={snapEnabled ? 'Disable snapping' : 'Enable snapping'}
-                title={snapEnabled ? 'Snapping enabled - Hold Shift to disable temporarily' : 'Snapping disabled'}
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                {snapEnabled ? 'Snap' : 'No Snap'}
-              </button>
-            )}
             {/* Prominent Mode Toggle */}
             <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => {
-                  setMode('draw');
-                  onModeChange?.('draw');
+                  setMode('cross');
+                  onModeChange?.('cross');
                 }}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  mode === 'draw'
+                  mode === 'cross'
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
-                aria-label="Draw mode"
+                aria-label="Cross mode"
               >
                 <svg
                   class="w-3.5 h-3.5"
@@ -489,22 +419,22 @@ export function MeasurementCanvas({
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    d="M12 5v14m-7-7h14"
                   />
                 </svg>
-                Draw
+                Cross
               </button>
               <button
                 onClick={() => {
-                  setMode('move');
-                  onModeChange?.('move');
+                  setMode('line');
+                  onModeChange?.('line');
                 }}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  mode === 'move'
+                  mode === 'line'
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
-                aria-label="Move mode"
+                aria-label="Line mode"
               >
                 <svg
                   class="w-3.5 h-3.5"
@@ -516,22 +446,22 @@ export function MeasurementCanvas({
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                    d="M4 20L20 4"
                   />
                 </svg>
-                Move
+                Line
               </button>
               <button
                 onClick={() => {
-                  setMode('delete');
-                  onModeChange?.('delete');
+                  setMode('drag');
+                  onModeChange?.('drag');
                 }}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  mode === 'delete'
-                    ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+                  mode === 'drag'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
-                aria-label="Delete mode"
+                aria-label="Drag mode"
               >
                 <svg
                   class="w-3.5 h-3.5"
@@ -543,10 +473,10 @@ export function MeasurementCanvas({
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    d="M12 2v4m0 12v4m-4-10h8m-8 0l2-2m-2 2l2 2m8-2l-2-2m2 2l-2 2"
                   />
                 </svg>
-                Delete
+                Drag
               </button>
             </div>
             {lines.length > 0 && (
@@ -579,13 +509,13 @@ export function MeasurementCanvas({
             {isDrawing && (
               <div class="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-md">
                 <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <span class="text-xs font-medium text-blue-600 dark:text-blue-400">Drawing...</span>
+                <span class="text-xs font-medium text-blue-600 dark:text-blue-400">Line pending...</span>
               </div>
             )}
-            {isMoving && (
+            {isDraggingHandle && (
               <div class="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 dark:bg-green-500/20 rounded-md">
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-xs font-medium text-green-600 dark:text-green-400">Moving...</span>
+                <span class="text-xs font-medium text-green-600 dark:text-green-400">Dragging...</span>
               </div>
             )}
           </div>
@@ -609,24 +539,23 @@ export function MeasurementCanvas({
               <div>
                 <p class="font-medium mb-1">How to draw:</p>
                 <ul class="list-disc list-inside space-y-0.5 ml-2">
-                  {mode === 'draw' ? (
+                  {mode === 'cross' ? (
                     <>
-                      <li>Click and drag to draw a new measurement line</li>
+                      <li>Click once to place a crosshair at that point</li>
+                      <li>Adds one vertical and one horizontal line</li>
                       <li>Lines automatically extend to canvas edges</li>
-                      <li>Hold <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Shift</kbd> to disable snapping for diagonal lines</li>
-                      <li>Orange dot appears when snapping is active</li>
                     </>
-                  ) : mode === 'move' ? (
+                  ) : mode === 'line' ? (
                     <>
-                      <li>Click and drag on a line to move it</li>
-                      <li>On mobile: Long press (200ms) then drag</li>
-                      <li>Hover over lines to see which one will be moved</li>
+                      <li>Click the first point, then click the second point</li>
+                      <li>Line is placed exactly where you click (no snapping)</li>
+                      <li>Press <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Esc</kbd> to cancel the pending line</li>
                     </>
                   ) : (
                     <>
-                      <li>Click on a line to delete it</li>
-                      <li>Hover over lines to see which one will be deleted</li>
-                      <li>Deleted lines are highlighted in red</li>
+                      <li>Drag from the left/right handle to add a vertical line</li>
+                      <li>Drag from the top/bottom handle to add a horizontal line</li>
+                      <li>Release to place the line</li>
                     </>
                   )}
                   <li>Intersection points appear automatically</li>
@@ -638,7 +567,7 @@ export function MeasurementCanvas({
       </div>
 
       {/* Canvas Container - Made more prominent */}
-      <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-800 p-2 overflow-hidden hover:border-blue-500/50 dark:hover:border-blue-400/50 transition-colors">
+      <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-800 p-2 overflow-hidden hover:border-blue-500/50 dark:hover:border-blue-400/50 transition-colors relative">
         <canvas
           ref={canvasRef}
           onMouseDown={handleStart}
@@ -646,19 +575,62 @@ export function MeasurementCanvas({
           onMouseUp={handleEnd}
           onMouseLeave={(e) => {
             handleEnd(e);
-            setHoveredLineId(null);
           }}
           onTouchStart={handleStart}
           onTouchMove={handleMove}
           onTouchEnd={handleEnd}
           onTouchCancel={handleEnd}
-          class={`w-full h-auto rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
-            mode === 'move' ? 'cursor-move' : mode === 'delete' ? 'cursor-pointer' : 'cursor-crosshair'
+          class={`rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
+            mode === 'drag' ? 'cursor-default' : 'cursor-crosshair'
           }`}
-          style={{ touchAction: 'none', maxHeight: '85vh', objectFit: 'contain' }}
+          style={{
+            touchAction: 'none',
+            maxWidth: '100%',
+            maxHeight: '85vh',
+            width: 'auto',
+            height: 'auto',
+            display: 'block',
+            margin: '0 auto',
+          }}
           tabIndex={0}
-          aria-label="Measurement canvas - draw lines by clicking and dragging. Press Escape to clear all lines."
+          aria-label="Measurement canvas - add lines using the selected mode. Press Escape to clear all lines."
         />
+        {mode === 'drag' && (
+          <>
+            <div class="absolute inset-x-0 top-1 flex items-center justify-center pointer-events-none">
+              <div
+                class="w-16 h-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-row-resize"
+                onMouseDown={handleHandleStart('y')}
+                onTouchStart={handleHandleStart('y')}
+                aria-label="Drag to add horizontal line (top)"
+              />
+            </div>
+            <div class="absolute inset-x-0 bottom-1 flex items-center justify-center pointer-events-none">
+              <div
+                class="w-16 h-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-row-resize"
+                onMouseDown={handleHandleStart('y')}
+                onTouchStart={handleHandleStart('y')}
+                aria-label="Drag to add horizontal line (bottom)"
+              />
+            </div>
+            <div class="absolute inset-y-0 left-1 flex items-center justify-center pointer-events-none">
+              <div
+                class="h-16 w-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-col-resize"
+                onMouseDown={handleHandleStart('x')}
+                onTouchStart={handleHandleStart('x')}
+                aria-label="Drag to add vertical line (left)"
+              />
+            </div>
+            <div class="absolute inset-y-0 right-1 flex items-center justify-center pointer-events-none">
+              <div
+                class="h-16 w-3 bg-blue-500/20 dark:bg-blue-400/20 border border-blue-400/50 rounded-full pointer-events-auto cursor-col-resize"
+                onMouseDown={handleHandleStart('x')}
+                onTouchStart={handleHandleStart('x')}
+                aria-label="Drag to add vertical line (right)"
+              />
+            </div>
+          </>
+        )}
       </div>
       <div class="sr-only" aria-live="polite" aria-atomic="true">
         {lines.length === 0

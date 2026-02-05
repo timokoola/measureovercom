@@ -28,7 +28,7 @@ export function MeasurementApp() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [paperSize, setPaperSize] = useState<PaperSize>('a5');
   const [unit, setUnit] = useState<MeasurementUnit>('mm');
-  const [mode, setMode] = useState<CanvasMode>('draw');
+  const [mode, setMode] = useState<CanvasMode>('cross');
   const [adjustments, setAdjustments] = useState<ImageAdjustmentsType>({
     grayscale: false,
     brightness: 100,
@@ -275,8 +275,8 @@ export function MeasurementApp() {
               {/* Coordinates Section - Prominent */}
               <CoordinateDisplay
                 points={intersections}
-                imageWidth={image.width}
-                imageHeight={image.height}
+                imageWidth={image.naturalWidth || image.width}
+                imageHeight={image.naturalHeight || image.height}
                 paperSize={paperSize}
                 unit={unit}
               />
