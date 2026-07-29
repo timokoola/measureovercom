@@ -1,18 +1,50 @@
+# measureover.com — robots.txt
+# Client-only measurement tool. Nothing private, no consent-walled content.
+# We want search and LLM crawlers to find and cite this page.
+
 User-agent: *
 Allow: /
 
-# Block AI training and generative crawlers
+# Search engines (explicit allow).
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# LLM retrieval crawlers — how the page becomes visible inside
+# ChatGPT, Claude, Perplexity, and Google AI Overviews.
 User-agent: GPTBot
-Disallow: /
+Allow: /
 
-User-agent: Google-Extended
-Disallow: /
+User-agent: ChatGPT-User
+Allow: /
 
-User-agent: CCBot
-Disallow: /
+User-agent: OAI-SearchBot
+Allow: /
 
-User-agent: anthropic-ai
-Disallow: /
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
 
 User-agent: PerplexityBot
-Disallow: /
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://measureover.com/sitemap-index.xml

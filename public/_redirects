@@ -1,2 +1,3 @@
-/robots.txt  /robots.txt  200
-/sitemap.xml /sitemap.xml 200
+# Astro's sitemap integration emits sitemap-index.xml. Keep the conventional
+# /sitemap.xml URL working for crawlers and anything already pointing at it.
+/sitemap.xml  /sitemap-index.xml  301

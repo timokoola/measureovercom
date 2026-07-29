@@ -3,22 +3,74 @@ import '../styles/global.css';
 
 interface Props {
   title: string;
+  description?: string;
 }
 
-const { title } = Astro.props;
+const {
+  title,
+  description = 'MeasureOver - Fast, lightweight image measurement tool for drawing guidance. Upload images and draw measurement lines with coordinate calculations.',
+} = Astro.props;
+
+const siteOrigin = Astro.site ?? new URL('https://measureover.com');
+const canonical = new URL(Astro.url.pathname, siteOrigin).href;
+
+// Glyphex aggregate page analytics — the only third-party script.
+// Loaded in production builds only; dev/preview stay clean.
+const GLYPHEX_SITE_ID = '0f702466-937f-4f52-9ba0-7513e941438f';
+const glyphexEnabled = import.meta.env.PROD;
 ---
 
 <!doctype html>
 <html lang="en" class="light">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content="MeasureOver - Fast, lightweight image measurement tool for drawing guidance. Upload images and draw measurement lines with coordinate calculations." />
+    <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <meta name="theme-color" content="#cc5500" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content="MeasureOver" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    {/* Apply the stored theme before first paint so dark-mode users
+        don't get a white flash while the Preact island hydrates. */}
+    <script is:inline>
+      try {
+        const stored = localStorage.getItem('measureover-theme');
+        const mode = stored
+          ? JSON.parse(stored).mode
+          : window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        const color = stored ? JSON.parse(stored).color : 'default';
+        const root = document.documentElement;
+        root.classList.remove('light', 'dark');
+        root.classList.add(mode === 'dark' ? 'dark' : 'light');
+        if (color === 'high-contrast') root.classList.add('high-contrast');
+      } catch {}
+    </script>
+
+    {
+      glyphexEnabled && (
+        <script
+          is:inline
+          defer
+          data-site-id={GLYPHEX_SITE_ID}
+          src="https://glyphex.io/tracker.js"
+        />
+      )
+    }
   </head>
   <body class="min-h-screen bg-broken-white dark:bg-dark-bg text-gray-900 dark:text-gray-100 transition-colors">
     <slot />
