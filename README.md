@@ -109,9 +109,9 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 
 ## Deployment
 
-Push to `main` — GitHub Actions typechecks, builds, and deploys to
-Cloudflare Pages. See [DEPLOYMENT.md](./DEPLOYMENT.md) for secrets, the
-manual deploy path, Search Console setup, and analytics.
+Push to `main` — Cloudflare Pages builds and deploys automatically.
+GitHub Actions runs typecheck + build as a quality gate alongside it. See
+[DEPLOYMENT.md](./DEPLOYMENT.md) for the full picture.
 
 ## Analytics
 

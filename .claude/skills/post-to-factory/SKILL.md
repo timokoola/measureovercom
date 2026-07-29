@@ -13,14 +13,14 @@ This skill posts updates so the status panel stays live.
 
 Done for this repo except the token itself:
 
-- Property slug lives in `.factory-property` → `measureovercom`.
+- Property slug lives in `.factory-property` → `measureover`.
   (Verify against `GET /api/registry/properties`; the API rejects an
   unknown slug, so fix the file if the registry uses a different one.)
 - `.factory-token` is already in `.gitignore`.
 - `scripts/post-to-factory.sh` is installed and executable.
 
 Remaining step: mint a **service token** at https://quillpond.com/tokens/
-with scopes `updates:write` + `registry:read`, named `measureovercom`.
+with scopes `updates:write` + `registry:read`, named `measureover`.
 The plaintext is shown exactly once. Save it as:
 
 ```sh
