@@ -21,7 +21,7 @@ const PAPER_KEYS: Record<PaperSize, keyof Translations> = {
 
 export function PaperSizeSelector({ value, onChange }: PaperSizeSelectorProps) {
   return (
-    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 p-5">
       <label
         for="paper-size"
         class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3"
@@ -32,7 +32,7 @@ export function PaperSizeSelector({ value, onChange }: PaperSizeSelectorProps) {
         id="paper-size"
         value={value}
         onChange={(e) => onChange(e.currentTarget.value as PaperSize)}
-        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:border-transparent transition-all shadow-sm hover:shadow-md"
+        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-surface text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:border-transparent transition-all shadow-xs hover:shadow-md"
         aria-label={t('paperSizeAria')}
         aria-describedby="paper-size-description"
       >

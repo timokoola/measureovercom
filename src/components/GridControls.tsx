@@ -15,7 +15,7 @@ export function GridControls({ gridSettings, onChange }: GridControlsProps) {
   };
 
   return (
-    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 p-5">
       <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
         {t('gridSettings')}
       </h3>
@@ -26,7 +26,7 @@ export function GridControls({ gridSettings, onChange }: GridControlsProps) {
             type="checkbox"
             checked={gridSettings.enabled}
             onChange={(e) => updateSetting('enabled', e.currentTarget.checked)}
-            class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded border-gray-300 dark:border-gray-600"
+            class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded-sm border-gray-300 dark:border-gray-600"
           />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
             {t('showGrid')}
@@ -56,7 +56,7 @@ export function GridControls({ gridSettings, onChange }: GridControlsProps) {
                 onInput={(e) =>
                   updateSetting('opacity', parseInt(e.currentTarget.value))
                 }
-                class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+                class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-burnt-orange-hover transition-colors"
                 aria-label={t('gridOpacityAria')}
               />
             </div>
@@ -87,7 +87,7 @@ export function GridControls({ gridSettings, onChange }: GridControlsProps) {
             onInput={(e) =>
               updateSetting('lineThickness', parseInt(e.currentTarget.value))
             }
-            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-burnt-orange-hover transition-colors"
             aria-label={t('lineThicknessAria')}
           />
           <div class="text-xs text-gray-500 dark:text-gray-500">

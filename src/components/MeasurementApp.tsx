@@ -182,7 +182,7 @@ export function MeasurementApp() {
   }, [canUndo, canRedo]);
 
   return (
-    <div class="min-h-screen bg-gradient-to-br from-broken-white via-white to-gray-50 dark:from-dark-bg dark:via-dark-surface dark:to-dark-bg flex flex-col">
+    <div class="min-h-screen bg-linear-to-br from-broken-white via-white to-gray-50 dark:from-dark-bg dark:via-dark-surface dark:to-dark-bg flex flex-col">
       <div class="p-4 md:p-8 flex-1">
         <header class="max-w-7xl mx-auto mb-12">
           <div class="flex justify-between items-start mb-4">
@@ -222,7 +222,7 @@ export function MeasurementApp() {
                     <button
                       onClick={handleUndo}
                       disabled={!canUndo}
-                      class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-xs hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label={`${t('undo')} (Ctrl+Z)`}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +233,7 @@ export function MeasurementApp() {
                     <button
                       onClick={handleRedo}
                       disabled={!canRedo}
-                      class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-xs hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label={`${t('redo')} (Ctrl+Y)`}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +243,7 @@ export function MeasurementApp() {
                     </button>
                     <button
                       onClick={handleExportImage}
-                      class="inline-flex items-center gap-2 px-4 py-2 bg-burnt-orange text-white font-medium rounded-lg shadow-sm hover:bg-[#b84a00] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all"
+                      class="inline-flex items-center gap-2 px-4 py-2 bg-burnt-orange text-white font-medium rounded-lg shadow-xs hover:bg-burnt-orange-hover hover:shadow-md focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all"
                       aria-label={t('exportImage')}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,7 +253,7 @@ export function MeasurementApp() {
                     </button>
                     <button
                       onClick={() => setImage(null)}
-                      class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all"
+                      class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg shadow-xs hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:shadow-md focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all"
                       aria-label={t('newImage')}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

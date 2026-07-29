@@ -24,7 +24,7 @@ export function ProjectManager({ onSave, onLoad }: ProjectManagerProps) {
   };
 
   return (
-    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 p-5">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {t('projects')}
@@ -39,7 +39,7 @@ export function ProjectManager({ onSave, onLoad }: ProjectManagerProps) {
 
       <button
         onClick={onSave}
-        class="w-full px-4 py-2 bg-burnt-orange text-white font-medium rounded-lg shadow-sm hover:bg-[#b84a00] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all text-sm"
+        class="w-full px-4 py-2 bg-burnt-orange text-white font-medium rounded-lg shadow-xs hover:bg-burnt-orange-hover hover:shadow-md focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 transition-all text-sm"
       >
         {t('saveProject')}
       </button>
@@ -49,7 +49,7 @@ export function ProjectManager({ onSave, onLoad }: ProjectManagerProps) {
           {projects.map((project) => (
             <div
               key={project.id}
-              class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900/50 rounded hover:bg-gray-100 dark:hover:bg-gray-900/80 cursor-pointer group"
+              class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900/50 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-900/80 cursor-pointer group"
               onClick={() => onLoad(project.id)}
             >
               <div class="flex-1 min-w-0">

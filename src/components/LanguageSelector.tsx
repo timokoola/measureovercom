@@ -25,7 +25,7 @@ export function LanguageSelector() {
         id="language-select"
         value={currentLang}
         onChange={(e) => handleChange(e.currentTarget.value as Language)}
-        class="px-2 py-1 text-xs bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 rounded text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2"
+        class="px-2 py-1 text-xs bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 rounded-sm text-gray-700 dark:text-gray-300 focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2"
         aria-label={t('selectLanguage')}
       >
         <option value="en">🇬🇧 English</option>

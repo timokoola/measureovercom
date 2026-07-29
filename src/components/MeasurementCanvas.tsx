@@ -396,7 +396,7 @@ export function MeasurementCanvas({
   return (
     <div class="relative" role="region" aria-label={t('measurementCanvasLabel')}>
       {/* Drawing Toolbar */}
-      <div class="mb-4 bg-white dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
+      <div class="mb-4 bg-white dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-gray-800 p-4 shadow-xs">
         <div class="flex items-center justify-between flex-wrap gap-4">
           <div class="flex items-center gap-3">
             <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-burnt-orange/10 dark:bg-burnt-orange/20">
@@ -437,7 +437,7 @@ export function MeasurementCanvas({
                 }}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   mode === 'cross'
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
                 aria-label={`${t('switchToMode')} ${t('cross')}`}
@@ -464,7 +464,7 @@ export function MeasurementCanvas({
                 }}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   mode === 'line'
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
                 aria-label={`${t('switchToMode')} ${t('line')}`}
@@ -491,7 +491,7 @@ export function MeasurementCanvas({
                 }}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   mode === 'delete'
-                    ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm'
+                    ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-xs'
                     : 'text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
                 }`}
                 aria-label={`${t('switchToMode')} ${t('delete')}`}
@@ -520,7 +520,7 @@ export function MeasurementCanvas({
                 </span>
                 <button
                   onClick={clearLines}
-                  class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-red-300 dark:hover:border-red-700 hover:text-red-600 dark:hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm font-medium transition-all"
+                  class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-red-300 dark:hover:border-red-700 hover:text-red-600 dark:hover:text-red-400 focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm font-medium transition-all"
                   aria-label={t('clearAll')}
                 >
                   <svg
@@ -558,7 +558,7 @@ export function MeasurementCanvas({
           <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
             <div class="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
               <svg
-                class="w-4 h-4 mt-0.5 flex-shrink-0"
+                class="w-4 h-4 mt-0.5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -591,7 +591,7 @@ export function MeasurementCanvas({
                       <li>{t('lineExactPlacement')}</li>
                       <li>
                         {lineCancelStart}
-                        <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Esc</kbd>
+                        <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-sm text-xs">Esc</kbd>
                         {lineCancelEnd || ''}
                       </li>
                     </>
@@ -624,7 +624,7 @@ export function MeasurementCanvas({
           onTouchMove={handleMove}
           onTouchEnd={handleEnd}
           onTouchCancel={handleEnd}
-          class={`rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
+          class={`rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
             mode === 'delete' ? 'cursor-pointer' : 'cursor-crosshair'
           }`}
           style={{
@@ -642,7 +642,7 @@ export function MeasurementCanvas({
         <>
           <div class="absolute inset-x-0 top-1 flex items-center justify-center pointer-events-none">
             <div
-              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-sm"
+              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-xs"
               onMouseDown={handleHandleStart('y')}
               onTouchStart={handleHandleStart('y')}
               aria-label={t('dragHandleTop')}
@@ -655,7 +655,7 @@ export function MeasurementCanvas({
           </div>
           <div class="absolute inset-x-0 bottom-1 flex items-center justify-center pointer-events-none">
             <div
-              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-sm"
+              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-xs"
               onMouseDown={handleHandleStart('y')}
               onTouchStart={handleHandleStart('y')}
               aria-label={t('dragHandleBottom')}
@@ -668,7 +668,7 @@ export function MeasurementCanvas({
           </div>
           <div class="absolute inset-y-0 left-1 flex items-center justify-center pointer-events-none">
             <div
-              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-sm"
+              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-xs"
               onMouseDown={handleHandleStart('x')}
               onTouchStart={handleHandleStart('x')}
               aria-label={t('dragHandleLeft')}
@@ -681,7 +681,7 @@ export function MeasurementCanvas({
           </div>
           <div class="absolute inset-y-0 right-1 flex items-center justify-center pointer-events-none">
             <div
-              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-sm"
+              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-xs"
               onMouseDown={handleHandleStart('x')}
               onTouchStart={handleHandleStart('x')}
               aria-label={t('dragHandleRight')}

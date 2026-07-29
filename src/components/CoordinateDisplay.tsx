@@ -99,7 +99,7 @@ export function CoordinateDisplay({
           return (
             <div
               key={index}
-              class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-800/50 rounded-lg border-2 border-gray-200 dark:border-gray-700 p-4 hover:border-burnt-orange/50 dark:hover:border-burnt-orange/50 transition-all hover:shadow-md"
+              class="bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-800/50 rounded-lg border-2 border-gray-200 dark:border-gray-700 p-4 hover:border-burnt-orange/50 dark:hover:border-burnt-orange/50 transition-all hover:shadow-md"
             >
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">

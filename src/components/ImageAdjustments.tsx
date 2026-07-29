@@ -37,7 +37,7 @@ export function ImageAdjustments({
   );
 
   return (
-    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5">
+    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 p-5">
       <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
         {t('imageAdjustments')}
       </h3>
@@ -50,7 +50,7 @@ export function ImageAdjustments({
             onChange={(e) =>
               updateAdjustment('grayscale', e.currentTarget.checked)
             }
-            class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded border-gray-300 dark:border-gray-600"
+            class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded-sm border-gray-300 dark:border-gray-600"
           />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
             {t('grayscale')}
@@ -78,7 +78,7 @@ export function ImageAdjustments({
             onInput={(e) =>
               updateAdjustment('brightness', parseInt(e.currentTarget.value), false)
             }
-            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-burnt-orange-hover transition-colors"
             aria-label={t('brightnessAria')}
           />
         </div>
@@ -104,7 +104,7 @@ export function ImageAdjustments({
             onInput={(e) =>
               updateAdjustment('contrast', parseInt(e.currentTarget.value), false)
             }
-            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-burnt-orange-hover transition-colors"
             aria-label={t('contrastAria')}
           />
         </div>
@@ -131,27 +131,27 @@ export function ImageAdjustments({
             onInput={(e) =>
               updateAdjustment('rotation', parseInt(e.currentTarget.value), false)
             }
-            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-[#b84a00] transition-colors"
+            class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-burnt-orange hover:accent-burnt-orange-hover transition-colors"
             aria-label={t('rotationAria')}
           />
           <div class="flex gap-2">
             <button
               onClick={() => updateAdjustment('rotation', (adjustments.rotation - 90 + 360) % 360, true)}
-              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-sm hover:bg-gray-200 dark:hover:bg-gray-700"
               aria-label={t('rotateCcwAria')}
             >
               ↺ -90°
             </button>
             <button
               onClick={() => updateAdjustment('rotation', (adjustments.rotation + 90) % 360, true)}
-              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-sm hover:bg-gray-200 dark:hover:bg-gray-700"
               aria-label={t('rotateCwAria')}
             >
               ↻ +90°
             </button>
             <button
               onClick={() => updateAdjustment('rotation', 0, true)}
-              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+              class="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-sm hover:bg-gray-200 dark:hover:bg-gray-700"
               aria-label={t('resetRotationAria')}
             >
               {t('reset')}
@@ -170,7 +170,7 @@ export function ImageAdjustments({
                   enabled: e.currentTarget.checked,
                 }, true)
               }
-              class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded border-gray-300 dark:border-gray-600"
+              class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded-sm border-gray-300 dark:border-gray-600"
             />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
               {t('enableCrop')}

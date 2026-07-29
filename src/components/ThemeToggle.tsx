@@ -38,7 +38,7 @@ export function ThemeToggle() {
       <button
         onClick={toggleMode}
         aria-label={`${t('switchToMode')} ${theme.mode === 'light' ? t('darkMode') : t('lightMode')}`}
-        class="p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-gray-400 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all shadow-sm hover:shadow-md"
+        class="p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-gray-400 dark:hover:border-gray-600 focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all shadow-xs hover:shadow-md"
         title={`${t('switchToMode')} ${theme.mode === 'light' ? t('darkMode') : t('lightMode')}`}
       >
         {theme.mode === 'light' ? '🌙' : '☀️'}
@@ -46,7 +46,7 @@ export function ThemeToggle() {
       <button
         onClick={toggleColor}
         aria-label={`${t('switchColorMode')} ${theme.color === 'default' ? t('colorModeHighContrast') : t('colorModeDefault')}`}
-        class="p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-gray-400 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all shadow-sm hover:shadow-md"
+        class="p-2.5 rounded-lg bg-white dark:bg-dark-surface border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-surface/80 hover:border-gray-400 dark:hover:border-gray-600 focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all shadow-xs hover:shadow-md"
         title={`${t('switchColorMode')} ${theme.color === 'default' ? t('colorModeHighContrast') : t('colorModeDefault')}`}
       >
         {theme.color === 'default' ? '🎨' : '🌈'}

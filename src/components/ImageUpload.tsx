@@ -70,7 +70,7 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
       class={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
         dragActive
           ? 'border-burnt-orange bg-burnt-orange/5 shadow-lg scale-[1.02]'
-          : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-surface shadow-sm hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600'
+          : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-surface shadow-xs hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600'
       }`}
     >
       <input
@@ -105,7 +105,7 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
       </p>
       <button
         onClick={() => fileInputRef.current?.click()}
-        class="inline-flex items-center gap-2 px-6 py-3 bg-burnt-orange text-white font-medium rounded-lg shadow-sm hover:bg-[#b84a00] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all duration-200"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-burnt-orange text-white font-medium rounded-lg shadow-xs hover:bg-burnt-orange-hover hover:shadow-md focus:outline-hidden focus:ring-2 focus:ring-burnt-orange focus:ring-offset-2 dark:focus:ring-offset-dark-bg transition-all duration-200"
       >
         <svg
           class="w-5 h-5"
