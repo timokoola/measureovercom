@@ -1,35 +1,65 @@
-name: Deploy to Cloudflare Pages
+name: Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build:
+    name: Build & typecheck
     runs-on: ubuntu-latest
-    name: Deploy
-    # NOTE: If Cloudflare Pages is connected directly to GitHub (recommended),
-    # this workflow is redundant and can be disabled or removed.
-    # Cloudflare Pages will build automatically on push to main.
-    # This workflow is only needed if you want to deploy via GitHub Actions instead.
-    continue-on-error: true  # Don't fail GitHub status checks if this fails
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version-file: .nvmrc
+          cache: npm
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Build
         run: npm run build
-      - name: Deploy to Cloudflare Pages (Optional - Cloudflare Pages handles builds natively)
-        continue-on-error: true  # Don't fail if deployment fails
-        uses: cloudflare/pages-action@v1
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: build
+    # Only main deploys; pull_request runs stop at the build gate.
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://measureover.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: measureovercom
-          directory: dist
+          command: pages deploy dist --project-name=measureovercom --branch=main

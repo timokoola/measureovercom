@@ -1,157 +1,136 @@
 # Deployment Guide
 
-## Cloudflare Pages Deployment
+MeasureOver is a static Astro site deployed to **Cloudflare Pages**
+(project `measureovercom`, custom domain `measureover.com`).
 
-MeasureOver is designed to be deployed to Cloudflare Pages. Here are the deployment options:
+## How deploys happen
 
-### Option 1: GitHub Integration (Recommended)
+Push to `main` → GitHub Actions builds, typechecks, and deploys.
 
-1. **Connect Repository to Cloudflare Pages:**
-   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
-   - Navigate to **Pages** → **Create a project**
-   - Connect your GitHub repository
-   - Select the `measureovercom` repository
+`.github/workflows/deploy.yml` runs two jobs:
 
-2. **Configure Build Settings:**
-   - **Framework preset**: Astro
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-   - **Root directory**: `/` (leave empty)
-   - **Node version**: 20 (or latest LTS)
+| Job | Runs on | What it does |
+|---|---|---|
+| `build` | push, PR, manual | `npm ci` → `npm run typecheck` → `npm run build`, uploads `dist` |
+| `deploy` | `main` only | downloads `dist`, `wrangler pages deploy` to Cloudflare |
 
-3. **Environment Variables:**
-   - No environment variables needed for this static site
+Pull requests stop at the build gate — they typecheck and build but never
+deploy. A failing typecheck blocks the deploy; this is deliberate.
 
-4. **Deploy:**
-   - Click **Save and Deploy**
-   - Cloudflare will automatically deploy on every push to `main` branch
+### Required GitHub secrets
 
-### Option 2: Wrangler CLI
+| Secret | Value | Status |
+|---|---|---|
+| `CLOUDFLARE_ACCOUNT_ID` | `011b26b9508cc73bb2aeadb58d8e542c` | set |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token, **Account → Cloudflare Pages → Edit** | **must be created** |
 
-1. **Install Wrangler:**
-   ```bash
-   npm install -g wrangler
-   ```
+Create the token at https://dash.cloudflare.com/profile/api-tokens
+(template: "Edit Cloudflare Workers", or a custom token with just
+`Account · Cloudflare Pages · Edit`), then:
 
-2. **Login to Cloudflare:**
-   ```bash
-   wrangler login
-   ```
+```sh
+gh secret set CLOUDFLARE_API_TOKEN --body '<token>'
+```
 
-3. **Build the project:**
-   ```bash
-   npm run build
-   ```
+The `deploy` job fails without it. The `build` job does not need it.
 
-4. **Deploy:**
-   ```bash
-   wrangler pages deploy dist --project-name=measureovercom
-   ```
+### ⚠️ Disconnect the Cloudflare Pages git integration
 
-### Option 3: GitHub Actions (CI/CD)
+The Pages project was originally connected directly to GitHub, so
+Cloudflare **also** builds on every push. With the Actions workflow in
+place that means two builds and two deploys racing per commit.
 
-The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically deploys to Cloudflare Pages on push to `main`.
+Fix it once, in the dashboard: **Pages → measureovercom → Settings →
+Builds & deployments → Git integration → Disconnect**. Actions then owns
+deployment.
 
-**Setup:**
-1. Go to your GitHub repository → Settings → Secrets and variables → Actions
-2. Add the following secrets:
-   - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token (create at https://dash.cloudflare.com/profile/api-tokens)
-   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID (found in dashboard URL)
+## Manual deploy
 
-**Required Permissions for API Token:**
-- Account: Cloudflare Pages: Edit
-- Zone: (not required for Pages)
+```sh
+npm run build
+npx wrangler pages deploy dist --project-name=measureovercom --branch=main
+```
 
-### Custom Domain
+Requires `npx wrangler login` (the local OAuth grant has `pages:write`).
 
-After deployment, you can add a custom domain:
+## Local development
 
-1. Go to Cloudflare Pages → Your project → Custom domains
-2. Click **Set up a custom domain**
-3. Enter your domain (e.g., `measureover.com`)
-4. Follow DNS configuration instructions
+```sh
+npm install
+npm run dev        # http://localhost:4321
+npm run typecheck  # astro check
+npm run build
+npm run preview
+```
 
-### Build Configuration
+Node **22.12+** is required by Astro 7 (`.nvmrc` pins 24).
 
-The project is configured for static site generation:
-- **Output**: Static HTML/CSS/JS
-- **Build directory**: `dist/`
-- **No server-side rendering**: Fully client-side application
+## Analytics
 
-### Mobile Testing
+Glyphex is wired into `src/layouts/Layout.astro`, site ID
+`0f702466-937f-4f52-9ba0-7513e941438f`. The `import.meta.env.PROD` guard
+keeps dev and preview builds free of the tracker — it loads only in
+production builds. It is the only third-party script on the site.
 
-After deployment, test on mobile devices:
+## SEO
 
-1. **Open the deployed URL** on your mobile device
-2. **Test key features:**
-   - Image upload (drag-drop won't work, but file picker should)
-   - Drawing lines with touch
-   - Moving lines (long press)
-   - Grid toggle
-   - Theme switching
-   - Language selector
-   - Export functionality
+- `astro.config.mjs` sets `site: 'https://measureover.com'`, which drives
+  canonical URLs and the sitemap.
+- `@astrojs/sitemap` emits `dist/sitemap-index.xml` + `sitemap-0.xml`.
+- `public/_redirects` 301s the conventional `/sitemap.xml` to
+  `/sitemap-index.xml`.
+- `public/robots.txt` allows search **and** LLM retrieval crawlers
+  (GPTBot, ClaudeBot, OAI-SearchBot, PerplexityBot, Google-Extended,
+  Applebot-Extended) and points at the sitemap.
 
-3. **Common mobile issues to check:**
-   - Touch event handling
-   - Canvas interaction
-   - Viewport scaling
-   - Button sizes (should be touch-friendly)
-   - Long press detection for moving lines
+Note: Cloudflare prepends its own "managed content signals" block to the
+served `robots.txt`. Ours is appended after it.
 
-### Performance Optimization
+### Google Search Console — remaining setup
 
-The build includes:
-- Minified JavaScript
-- Optimized CSS
-- Tree-shaking
-- Code splitting
-- Gzip compression (handled by Cloudflare)
+Verification is **not yet done**. It needs two things this repo can't
+supply:
 
-### Troubleshooting
+1. The TXT verification string from Search Console
+   (Add property → Domain → `measureover.com` → copy the
+   `google-site-verification=...` value).
+2. A Cloudflare API token with **Zone → DNS → Edit** on `measureover.com`.
+   The local wrangler OAuth grant is `zone:read` only and returns
+   `Authentication error` on the DNS endpoint.
 
-**Build fails:**
-- Check Node.js version (requires 18+)
-- Run `npm install` locally to verify dependencies
-- Check build logs in Cloudflare dashboard
+Then either add the TXT record in the Cloudflare dashboard (DNS → Records
+→ Add → TXT, name `@`), or run:
 
-**Assets not loading:**
-- Verify `dist/` directory structure
-- Check that `public/` files are copied to `dist/`
-- Ensure base path is correct (should be `/`)
+```sh
+curl -X POST \
+  "https://api.cloudflare.com/client/v4/zones/d9c7c329234ca83155ba9f2997a934a7/dns_records" \
+  -H "Authorization: Bearer $CF_DNS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"TXT","name":"@","content":"google-site-verification=<VALUE>","ttl":1}'
+```
 
-**Mobile issues:**
-- Check viewport meta tag in `Layout.astro`
-- Verify touch event handlers
-- Test on actual devices, not just browser dev tools
+After it verifies, submit `https://measureover.com/sitemap-index.xml`
+under **Sitemaps**.
 
-## Local Testing Before Deployment
+## Product factory (quillpond.com)
 
-1. **Build locally:**
-   ```bash
-   npm run build
-   ```
+`scripts/post-to-factory.sh` posts status updates to the Skadi product
+factory. Property slug is in `.factory-property` (`measureovercom`).
 
-2. **Preview production build:**
-   ```bash
-   npm run preview
-   ```
+The service token must be minted in the quillpond UI — it is shown once
+and there is no API to mint it. See `.claude/skills/post-to-factory/SKILL.md`.
 
-3. **Test on mobile:**
-   - Use your local network IP: `http://YOUR_IP:4321`
-   - Or use a tool like [ngrok](https://ngrok.com/) to expose localhost
+```sh
+./scripts/post-to-factory.sh "Title" "Optional body" [note|release|build-result]
+```
 
-## Post-Deployment Checklist
+## Post-deployment checklist
 
-- [ ] Site loads correctly
-- [ ] Image upload works
-- [ ] Drawing lines works (desktop and mobile)
-- [ ] Moving lines works (desktop and mobile)
-- [ ] Grid toggle works
-- [ ] Theme switching works
-- [ ] Language selector works
-- [ ] Export functionality works
-- [ ] Coordinates display correctly
-- [ ] Footer displays correctly
-- [ ] Mobile viewport is correct
-- [ ] Touch interactions work smoothly
+- [ ] Site loads over HTTPS
+- [ ] `/sitemap-index.xml` returns XML (not HTML)
+- [ ] `/sitemap.xml` 301s to `/sitemap-index.xml`
+- [ ] `/robots.txt` lists the sitemap
+- [ ] Glyphex registers a page view in production
+- [ ] Image upload, drawing, undo/redo, export all work
+- [ ] Theme + language selectors work; no white flash in dark mode
+- [ ] Touch interactions work on a real device

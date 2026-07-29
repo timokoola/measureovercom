@@ -77,10 +77,16 @@ measureovercom/
 
 ## Technology Stack
 
-- **Astro** - Static site generator
-- **Preact** - Lightweight React alternative
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Utility-first CSS framework
+- **Astro 7** - Static site generator
+- **Preact 10** - Lightweight React alternative
+- **TypeScript 6** - Type safety (strict mode)
+- **Tailwind CSS 4** - Utility-first CSS, configured CSS-first in
+  `src/styles/global.css` via `@theme` (there is no `tailwind.config.*`)
+
+Requires **Node 22.12+** (`.nvmrc` pins 24).
+
+Tailwind is loaded through `@tailwindcss/vite`, not the deprecated
+`@astrojs/tailwind` integration.
 
 ## Development
 
@@ -103,18 +109,15 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 
 ## Deployment
 
-This app is designed to be deployed to Cloudflare Pages. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+Push to `main` — GitHub Actions typechecks, builds, and deploys to
+Cloudflare Pages. See [DEPLOYMENT.md](./DEPLOYMENT.md) for secrets, the
+manual deploy path, Search Console setup, and analytics.
 
-**Quick Deploy:**
+## Analytics
 
-1. Build the project: `npm run build`
-2. Deploy the `dist/` directory to Cloudflare Pages
-3. Configure build settings:
-   - Build command: `npm run build`
-   - Output directory: `dist`
-   - Node version: 20
-
-For GitHub integration, CI/CD, and mobile testing instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+Aggregate page views via [Glyphex](https://glyphex.io) — production
+builds only, no cookies, no personal data, no consent banner. It is the
+only third-party script on the site.
 
 ## Browser Support
 
