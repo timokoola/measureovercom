@@ -1,21 +1,52 @@
 import type { Line, ImageAdjustments, GridSettings, PaperSize } from '../types';
 import { extendLineToEdges } from './lineExtension';
 import { drawGrid, calculateGridSpacing } from './grid';
-import { applyImageFilters } from './imageFilters';
+import { applyImageFilters, needsFilters, getRotatedSize } from './imageFilters';
 import { getPaperSize } from './paperSizes';
+import { isTouchDevice } from './device';
 
 // Standard DPI for print quality
 const EXPORT_DPI = 300;
 const MM_TO_INCHES = 25.4;
 
-function calculateExportDimensions(paperSize: PaperSize): { width: number; height: number } {
+/**
+ * Browsers cap canvas area. Past the cap `drawImage` silently no-ops and
+ * `toBlob` yields null or an empty file, so the user downloads a blank PNG with
+ * no error at all. A0 at 300 DPI is 9933x14043 ~= 139 megapixels (~556 MB RGBA),
+ * far beyond every mobile limit. Stay under the cap and drop DPI instead.
+ */
+const MAX_EXPORT_PIXELS_TOUCH = 16_777_216; // ~16.7 MP, the historical iOS Safari ceiling
+const MAX_EXPORT_PIXELS_DESKTOP = 67_108_864; // ~67 MP
+
+export function getMaxExportPixels(): number {
+  return isTouchDevice() ? MAX_EXPORT_PIXELS_TOUCH : MAX_EXPORT_PIXELS_DESKTOP;
+}
+
+/**
+ * Target pixel size for a sheet, reduced below 300 DPI only when the full-DPI
+ * canvas would exceed what this browser can actually rasterise.
+ */
+function calculateExportDimensions(paperSize: PaperSize): {
+  width: number;
+  height: number;
+  dpi: number;
+} {
   const paper = getPaperSize(paperSize);
-  // Convert mm to inches, then to pixels at target DPI
   const widthInches = paper.width / MM_TO_INCHES;
   const heightInches = paper.height / MM_TO_INCHES;
+
+  const maxPixels = getMaxExportPixels();
+  const fullPixels = widthInches * EXPORT_DPI * heightInches * EXPORT_DPI;
+  // Area scales with dpi^2, so the DPI factor is the square root.
+  const dpi =
+    fullPixels > maxPixels
+      ? Math.max(72, Math.floor(EXPORT_DPI * Math.sqrt(maxPixels / fullPixels)))
+      : EXPORT_DPI;
+
   return {
-    width: Math.round(widthInches * EXPORT_DPI),
-    height: Math.round(heightInches * EXPORT_DPI),
+    width: Math.round(widthInches * dpi),
+    height: Math.round(heightInches * dpi),
+    dpi,
   };
 }
 
@@ -25,12 +56,19 @@ export async function exportImageWithLines(
   adjustments: ImageAdjustments,
   gridSettings: GridSettings,
   paperSize: PaperSize
-): Promise<string> {
+): Promise<Blob> {
   // Calculate target dimensions based on paper size
   const targetDimensions = calculateExportDimensions(paperSize);
-  
+
+  // Rotation changes the drawn footprint, so the aspect fit must use the
+  // rotated bounding box — otherwise a rotated image is squashed and its
+  // lines no longer line up with the pixels.
+  const sourceW = image.naturalWidth || image.width;
+  const sourceH = image.naturalHeight || image.height;
+  const rotated = getRotatedSize(sourceW, sourceH, adjustments.rotation);
+
   // Calculate scale factors to maintain aspect ratio
-  const imageAspect = image.width / image.height;
+  const imageAspect = rotated.width / rotated.height;
   const targetAspect = targetDimensions.width / targetDimensions.height;
   
   let exportWidth: number;
@@ -50,41 +88,34 @@ export async function exportImageWithLines(
     offsetX = (targetDimensions.width - exportWidth) / 2;
   }
   
-  // Calculate scale factor for lines
-  const scaleX = exportWidth / image.width;
-  const scaleY = exportHeight / image.height;
-  
+  // Scale factors map canvas-space line coordinates onto the exported sheet.
+  // Lines live in the rotated canvas space, so scale against that, not the raw image.
+  const scaleX = exportWidth / rotated.width;
+  const scaleY = exportHeight / rotated.height;
+
   // Create a new canvas for export at target paper size
   const canvas = document.createElement('canvas');
   canvas.width = targetDimensions.width;
   canvas.height = targetDimensions.height;
   const ctx = canvas.getContext('2d');
-  
+
   if (!ctx) throw new Error('Could not get canvas context');
 
   // Fill with white background
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Create a temporary canvas for image processing
+  // Temp canvas is sized to the rotated bounding box so rotation isn't clipped.
   const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = image.width;
-  tempCanvas.height = image.height;
+  tempCanvas.width = rotated.width;
+  tempCanvas.height = rotated.height;
   const tempCtx = tempCanvas.getContext('2d');
   if (!tempCtx) throw new Error('Could not get temp canvas context');
-  
-  // Draw original image to temp canvas
-  tempCtx.drawImage(image, 0, 0);
 
-  // Apply image filters (including rotation and crop) to temp canvas
-  if (
-    adjustments.grayscale ||
-    adjustments.brightness !== 100 ||
-    adjustments.contrast !== 100 ||
-    adjustments.rotation !== 0 ||
-    adjustments.crop.enabled
-  ) {
+  if (needsFilters(adjustments)) {
     applyImageFilters(tempCanvas, adjustments, image);
+  } else {
+    tempCtx.drawImage(image, 0, 0);
   }
 
   // Draw scaled image to export canvas
@@ -94,7 +125,7 @@ export async function exportImageWithLines(
   if (gridSettings.enabled) {
     const isDarkMode = document.documentElement.classList.contains('dark');
     // Calculate grid spacing based on original image dimensions
-    const originalGridSpacing = calculateGridSpacing(image.width, image.height);
+    const originalGridSpacing = calculateGridSpacing(rotated.width, rotated.height);
     // Scale the grid spacing proportionally - use average scale to maintain grid appearance
     // This ensures the grid lines align with the scaled image
     const scaleFactor = (scaleX + scaleY) / 2;
@@ -149,7 +180,7 @@ export async function exportImageWithLines(
   });
 
   // Draw intersection points (scaled)
-  const intersections = calculateIntersections(lines, image.width, image.height);
+  const intersections = calculateIntersections(lines, rotated.width, rotated.height);
   const pointRadius = Math.max(3, 4 * Math.min(scaleX, scaleY));
   intersections.forEach((point) => {
     const scaledX = point.x * scaleX + offsetX;
@@ -167,7 +198,20 @@ export async function exportImageWithLines(
     ctx.fill();
   });
 
-  return canvas.toDataURL('image/png');
+  // toBlob rather than toDataURL: no base64 copy in memory, and a null/empty
+  // result tells us the canvas exceeded the browser's limit instead of silently
+  // handing the user a blank download.
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, 'image/png');
+  });
+
+  if (!blob || blob.size === 0) {
+    throw new Error(
+      `Export failed: the browser could not render a ${canvas.width}x${canvas.height} canvas. Try a smaller paper size.`
+    );
+  }
+
+  return blob;
 }
 
 import { findAllIntersections } from './math';
@@ -184,9 +228,13 @@ function calculateIntersections(lines: Line[], width: number, height: number): A
   return findAllIntersections(extendedLines);
 }
 
-export function downloadImage(dataUrl: string, filename: string = 'measureover-export.png'): void {
+export function downloadImage(blob: Blob, filename: string = 'measureover-export.png'): void {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.download = filename;
-  link.href = dataUrl;
+  link.href = url;
   link.click();
+  // Revoke on the next tick — immediate revocation can cancel the download in
+  // some browsers, and never revoking retains the whole blob for the session.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

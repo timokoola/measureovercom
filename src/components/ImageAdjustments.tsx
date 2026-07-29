@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'preact/hooks';
+import { useRef, useCallback, useEffect } from 'preact/hooks';
 import type { ImageAdjustments } from '../types';
 import { t } from '../utils/i18n';
 
@@ -12,6 +12,30 @@ export function ImageAdjustments({
   onChange,
 }: ImageAdjustmentsProps) {
   const timeoutRef = useRef<number | null>(null);
+  // The authoritative in-flight value. Building each update from the
+  // `adjustments` prop meant a change made while a debounced one was pending
+  // was built from pre-pending state: moving brightness then contrast within
+  // 100 ms silently dropped the brightness change, and toggling grayscale
+  // mid-drag fired an immediate update that the stale pending timer then
+  // reverted.
+  const latestRef = useRef<ImageAdjustments>(adjustments);
+
+  // Only accept the prop as truth when nothing is pending, otherwise the
+  // parent's not-yet-updated value would clobber the in-flight edit.
+  useEffect(() => {
+    if (timeoutRef.current === null) {
+      latestRef.current = adjustments;
+    }
+  }, [adjustments]);
+
+  // A pending commit must not fire after unmount (e.g. clicking "New image"
+  // mid-drag).
+  useEffect(
+    () => () => {
+      if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+    },
+    []
+  );
 
   const updateAdjustment = useCallback(
     <K extends keyof ImageAdjustments>(
@@ -19,21 +43,26 @@ export function ImageAdjustments({
       value: ImageAdjustments[K],
       immediate = false
     ) => {
-      const newAdjustments = { ...adjustments, [key]: value };
-      
-      if (immediate || key === 'grayscale' || key === 'crop') {
+      const newAdjustments = { ...latestRef.current, [key]: value };
+      latestRef.current = newAdjustments;
+
+      // Any update supersedes a pending one.
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (immediate || key === 'grayscale') {
         onChange(newAdjustments);
       } else {
         // Debounce slider inputs for better performance
-        if (timeoutRef.current !== null) {
-          clearTimeout(timeoutRef.current);
-        }
         timeoutRef.current = window.setTimeout(() => {
-          onChange(newAdjustments);
+          timeoutRef.current = null;
+          onChange(latestRef.current);
         }, 100);
       }
     },
-    [adjustments, onChange]
+    [onChange]
   );
 
   return (
@@ -159,29 +188,14 @@ export function ImageAdjustments({
           </div>
         </div>
 
-        <div class="flex flex-col gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <label class="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={adjustments.crop.enabled}
-              onChange={(e) =>
-                updateAdjustment('crop', {
-                  ...adjustments.crop,
-                  enabled: e.currentTarget.checked,
-                }, true)
-              }
-              class="w-5 h-5 text-burnt-orange focus:ring-burnt-orange rounded-sm border-gray-300 dark:border-gray-600"
-            />
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
-              {t('enableCrop')}
-            </span>
-          </label>
-          {adjustments.crop.enabled && (
-            <div class="pl-8 space-y-3 text-xs text-gray-600 dark:text-gray-400">
-              <p>{t('cropNote')}</p>
-            </div>
-          )}
-        </div>
+        {/*
+          The crop control was removed. It only ever exposed an "enable"
+          checkbox whose defaults (0,0,100%,100%) redrew the identical full
+          frame, so it did nothing — and had it ever produced real crop values,
+          convertPixelsToMM still measured against the full image, which would
+          have made every printed coordinate wrong. Reinstate it together with
+          crop-aware coordinate maths, not before.
+        */}
       </div>
     </div>
   );

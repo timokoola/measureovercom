@@ -63,15 +63,28 @@ export function extendLineToEdges(
   if (yAtRight >= 0 && yAtRight <= canvasHeight) {
     intersections.push({ x: canvasWidth, y: yAtRight });
   }
-  
-  // Return the two edge points
+
+  // Pick the two most distant edge points rather than the first two. A diagonal
+  // passing exactly through a corner satisfies two edge tests at that corner, so
+  // intersections[0] and [1] can be the same point — yielding a zero-length line
+  // that then fails hit detection and produces no intersections.
   if (intersections.length >= 2) {
-    return {
-      start: intersections[0],
-      end: intersections[1],
-    };
+    let best = { start: intersections[0], end: intersections[1] };
+    let bestDistSq = -1;
+    for (let i = 0; i < intersections.length; i++) {
+      for (let j = i + 1; j < intersections.length; j++) {
+        const dxe = intersections[j].x - intersections[i].x;
+        const dye = intersections[j].y - intersections[i].y;
+        const distSq = dxe * dxe + dye * dye;
+        if (distSq > bestDistSq) {
+          bestDistSq = distSq;
+          best = { start: intersections[i], end: intersections[j] };
+        }
+      }
+    }
+    if (bestDistSq > 0) return best;
   }
-  
+
   // Fallback: return original line if we can't extend
   return { start, end };
 }

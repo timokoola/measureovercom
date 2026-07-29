@@ -21,13 +21,6 @@ export interface ImageAdjustments {
   brightness: number; // 0-200, 100 = normal
   contrast: number; // 0-200, 100 = normal
   rotation: number; // 0-360 degrees
-  crop: {
-    enabled: boolean;
-    x: number; // 0-100, percentage
-    y: number; // 0-100, percentage
-    width: number; // 0-100, percentage
-    height: number; // 0-100, percentage
-  };
 }
 
 export interface Theme {
@@ -38,8 +31,7 @@ export interface Theme {
 export interface GridSettings {
   enabled: boolean;
   opacity: number; // 0-100
-  spacing: number; // pixels between grid lines
-  lineThickness: number; // 1-20 pixels, default 6 on mobile, 3 on desktop
+  lineThickness: number; // 1-20 pixels, default 8 on touch devices, 3 on desktop
 }
 
 export type CanvasMode = 'cross' | 'line' | 'delete';

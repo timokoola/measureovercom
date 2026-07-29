@@ -43,15 +43,14 @@ function pointToLineDistance(
 }
 
 /**
- * Find which line (if any) was clicked on
- * Returns the line ID and the click offset from the line center
+ * Find which line (if any) was clicked on. Returns its id.
  */
 export function findLineAtPoint(
   point: Point,
   lines: Line[],
   canvasWidth: number,
   canvasHeight: number
-): { lineId: string; offset: Point } | null {
+): { lineId: string } | null {
   for (const line of lines) {
     // Check against the extended line (since that's what's visually displayed)
     const extended = extendLineToEdges(line, canvasWidth, canvasHeight);
@@ -65,37 +64,9 @@ export function findLineAtPoint(
     const distance = pointToLineDistance(point, extended.start, extended.end);
     
     if (distance <= HIT_THRESHOLD) {
-      // Calculate offset from original line center (for movement calculation)
-      const centerX = (line.start.x + line.end.x) / 2;
-      const centerY = (line.start.y + line.end.y) / 2;
-      const offset = {
-        x: point.x - centerX,
-        y: point.y - centerY,
-      };
-      return { lineId: line.id, offset };
+      return { lineId: line.id };
     }
   }
-  
-  return null;
-}
 
-/**
- * Move a line by a delta amount, maintaining its orientation
- */
-export function moveLine(
-  line: Line,
-  deltaX: number,
-  deltaY: number
-): Line {
-  return {
-    ...line,
-    start: {
-      x: line.start.x + deltaX,
-      y: line.start.y + deltaY,
-    },
-    end: {
-      x: line.end.x + deltaX,
-      y: line.end.y + deltaY,
-    },
-  };
+  return null;
 }

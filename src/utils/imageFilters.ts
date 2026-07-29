@@ -1,5 +1,40 @@
 import type { ImageAdjustments } from '../types';
 
+/** True when any adjustment actually changes pixels — worth the filter pass. */
+export function needsFilters(adjustments: ImageAdjustments): boolean {
+  return (
+    adjustments.grayscale ||
+    adjustments.brightness !== 100 ||
+    adjustments.contrast !== 100 ||
+    adjustments.rotation !== 0
+  );
+}
+
+/**
+ * Size of the axis-aligned bounding box of a w x h rectangle rotated by `degrees`.
+ *
+ * Rotation used to be drawn into a canvas that kept the *unrotated* dimensions,
+ * so a 90-degree turn of any non-square image drew H x W content into a W x H
+ * canvas: the overflow was clipped and blank wedges appeared in the corners.
+ * Callers must size their canvas with this before calling applyImageFilters.
+ */
+export function getRotatedSize(
+  width: number,
+  height: number,
+  degrees: number
+): { width: number; height: number } {
+  if (!Number.isFinite(degrees) || degrees % 360 === 0) {
+    return { width, height };
+  }
+  const rad = (degrees * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  return {
+    width: Math.max(1, Math.round(width * cos + height * sin)),
+    height: Math.max(1, Math.round(width * sin + height * cos)),
+  };
+}
+
 export function applyImageFilters(
   canvas: HTMLCanvasElement,
   adjustments: ImageAdjustments,
@@ -8,32 +43,24 @@ export function applyImageFilters(
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // Always draw the source image first if provided (needed for pixel-level filters)
+  const rotation = Number.isFinite(adjustments.rotation) ? adjustments.rotation : 0;
+
   if (sourceImage) {
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Handle rotation and crop transformations
-    if (adjustments.rotation !== 0 && !adjustments.crop.enabled) {
-      // Simple rotation - draw rotated image
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      ctx.translate(centerX, centerY);
-      ctx.rotate((adjustments.rotation * Math.PI) / 180);
-      ctx.translate(-centerX, -centerY);
-      ctx.drawImage(sourceImage, 0, 0);
-    } else if (adjustments.crop.enabled) {
-      // Crop - draw cropped portion
-      const cropX = (adjustments.crop.x / 100) * sourceImage.width;
-      const cropY = (adjustments.crop.y / 100) * sourceImage.height;
-      const cropW = (adjustments.crop.width / 100) * sourceImage.width;
-      const cropH = (adjustments.crop.height / 100) * sourceImage.height;
-      ctx.drawImage(sourceImage, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+    if (rotation % 360 !== 0) {
+      // Rotate about the centre of the (already bounding-box-sized) canvas and
+      // draw the image centred, so nothing is clipped at any angle.
+      const srcW = sourceImage.naturalWidth || sourceImage.width;
+      const srcH = sourceImage.naturalHeight || sourceImage.height;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.drawImage(sourceImage, -srcW / 2, -srcH / 2);
     } else {
-      // Normal draw - no transformations
       ctx.drawImage(sourceImage, 0, 0);
     }
-    
+
     ctx.restore();
   }
 

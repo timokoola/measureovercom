@@ -50,7 +50,7 @@ export function GridControls({ gridSettings, onChange }: GridControlsProps) {
               <input
                 id="grid-opacity"
                 type="range"
-                min="0"
+                min="5"
                 max="100"
                 value={gridSettings.opacity}
                 onInput={(e) =>

@@ -48,13 +48,6 @@ export class UndoRedoManager {
     return this.currentIndex < this.history.length - 1;
   }
 
-  getCurrentState(): HistoryState | null {
-    if (this.currentIndex >= 0 && this.currentIndex < this.history.length) {
-      return JSON.parse(JSON.stringify(this.history[this.currentIndex]));
-    }
-    return null;
-  }
-
   clear(): void {
     this.history = [];
     this.currentIndex = -1;

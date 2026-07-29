@@ -30,16 +30,3 @@ export function convertPixelsToMM(
   const scale = Math.min(scaleX, scaleY); // Use the smaller scale to maintain aspect ratio
   return pixels * scale;
 }
-
-export function convertMMToPixels(
-  mm: number,
-  imageWidth: number,
-  imageHeight: number,
-  paperSize: PaperSize
-): number {
-  const paper = getPaperSize(paperSize);
-  const scaleX = paper.width / imageWidth;
-  const scaleY = paper.height / imageHeight;
-  const scale = Math.min(scaleX, scaleY);
-  return mm / scale;
-}

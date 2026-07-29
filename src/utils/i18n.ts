@@ -129,6 +129,9 @@ export interface Translations {
   colorModeDefault: string;
   colorModeHighContrast: string;
   error: string;
+  handleKeyboardHint: string;
+  projectSaveFailed: string;
+  imageLoadFailed: string;
   
   // Theme
   lightMode: string;
@@ -249,6 +252,9 @@ const translations: Record<Language, Translations> = {
     colorModeDefault: 'default',
     colorModeHighContrast: 'high contrast',
     error: 'Error',
+    handleKeyboardHint: 'use arrow keys to position, Enter to place a line',
+    projectSaveFailed: 'Could not save the project — browser storage is full or unavailable.',
+    imageLoadFailed: 'That image could not be opened. Try a JPEG, PNG or WebP file.',
     lightMode: 'Light Mode',
     darkMode: 'Dark Mode',
     highContrast: 'High Contrast',
@@ -363,6 +369,9 @@ const translations: Record<Language, Translations> = {
     colorModeDefault: 'oletus',
     colorModeHighContrast: 'korkea kontrasti',
     error: 'Virhe',
+    handleKeyboardHint: 'siirrä nuolinäppäimillä, Enter lisää viivan',
+    projectSaveFailed: 'Projektin tallennus epäonnistui — selaimen tallennustila on täynnä tai ei käytettävissä.',
+    imageLoadFailed: 'Kuvaa ei voitu avata. Kokeile JPEG-, PNG- tai WebP-tiedostoa.',
     lightMode: 'Vaalea tila',
     darkMode: 'Tumma tila',
     highContrast: 'Korkea kontrasti',
@@ -477,6 +486,9 @@ const translations: Record<Language, Translations> = {
     colorModeDefault: 'standard',
     colorModeHighContrast: 'hög kontrast',
     error: 'Fel',
+    handleKeyboardHint: 'använd piltangenterna för att placera, Enter för att lägga till en linje',
+    projectSaveFailed: 'Projektet kunde inte sparas — webbläsarens lagring är full eller otillgänglig.',
+    imageLoadFailed: 'Bilden kunde inte öppnas. Prova en JPEG-, PNG- eller WebP-fil.',
     lightMode: 'Ljust läge',
     darkMode: 'Mörkt läge',
     highContrast: 'Hög kontrast',
@@ -591,6 +603,9 @@ const translations: Record<Language, Translations> = {
     colorModeDefault: 'par défaut',
     colorModeHighContrast: 'contraste élevé',
     error: 'Erreur',
+    handleKeyboardHint: 'utilisez les flèches pour positionner, Entrée pour placer une ligne',
+    projectSaveFailed: "Impossible d'enregistrer le projet — le stockage du navigateur est plein ou indisponible.",
+    imageLoadFailed: "Cette image n'a pas pu être ouverte. Essayez un fichier JPEG, PNG ou WebP.",
     lightMode: 'Mode clair',
     darkMode: 'Mode sombre',
     highContrast: 'Contraste élevé',
@@ -705,6 +720,9 @@ const translations: Record<Language, Translations> = {
     colorModeDefault: 'predeterminado',
     colorModeHighContrast: 'alto contraste',
     error: 'Error',
+    handleKeyboardHint: 'usa las flechas para posicionar, Intro para colocar una línea',
+    projectSaveFailed: 'No se pudo guardar el proyecto: el almacenamiento del navegador está lleno o no disponible.',
+    imageLoadFailed: 'No se pudo abrir esa imagen. Prueba con un archivo JPEG, PNG o WebP.',
     lightMode: 'Modo claro',
     darkMode: 'Modo oscuro',
     highContrast: 'Alto contraste',
@@ -819,6 +837,9 @@ const translations: Record<Language, Translations> = {
     colorModeDefault: 'Standard',
     colorModeHighContrast: 'hoher Kontrast',
     error: 'Fehler',
+    handleKeyboardHint: 'mit den Pfeiltasten positionieren, Enter setzt eine Linie',
+    projectSaveFailed: 'Projekt konnte nicht gespeichert werden — der Browser-Speicher ist voll oder nicht verfügbar.',
+    imageLoadFailed: 'Dieses Bild konnte nicht geöffnet werden. Versuchen Sie eine JPEG-, PNG- oder WebP-Datei.',
     lightMode: 'Heller Modus',
     darkMode: 'Dunkler Modus',
     highContrast: 'Hoher Kontrast',

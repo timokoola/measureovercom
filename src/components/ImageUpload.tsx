@@ -8,7 +8,8 @@ interface ImageUploadProps {
 export function ImageUpload({ onImageLoad }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [lang, setLang] = useState(getLanguage());
+  // State exists purely to force a re-render when the language changes.
+  const [, setLang] = useState(getLanguage());
 
   useEffect(() => {
     const handleLangChange = () => {
@@ -24,15 +25,28 @@ export function ImageUpload({ onImageLoad }: ImageUploadProps) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        onImageLoad(img);
-      };
-      img.src = e.target?.result as string;
+    // An object URL instead of FileReader.readAsDataURL: a 10 MB JPEG became a
+    // ~13 MB base64 string retained in img.src for the lifetime of the app, on
+    // top of the decoded bitmap.
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      // The bitmap is decoded and owned by the element now; the URL is not
+      // needed and holding it pins the file blob.
+      URL.revokeObjectURL(url);
+      onImageLoad(img);
     };
-    reader.readAsDataURL(file);
+
+    // Previously absent: a corrupt file, or a format this browser cannot decode
+    // (HEIC outside Safari passes the image/* check), failed silently with no
+    // feedback whatsoever.
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      alert(t('imageLoadFailed'));
+    };
+
+    img.src = url;
   };
 
   const handleInputChange = (e: Event) => {

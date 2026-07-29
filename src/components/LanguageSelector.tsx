@@ -11,7 +11,13 @@ export function LanguageSelector() {
   const handleChange = (lang: Language) => {
     setLanguage(lang);
     setCurrentLang(lang);
-    localStorage.setItem('measureover-language', lang);
+    try {
+      localStorage.setItem('measureover-language', lang);
+    } catch {
+      // Storage full or blocked. The language still switches for this session;
+      // an unguarded throw here would abort before the event below and leave
+      // the rest of the UI on the old language.
+    }
     // Trigger a re-render by dispatching a custom event
     window.dispatchEvent(new Event('languagechange'));
   };

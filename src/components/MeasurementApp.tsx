@@ -19,8 +19,9 @@ import type {
   CanvasMode,
 } from '../types';
 import { getStoredTheme, applyTheme } from '../utils/theme';
+import { isTouchDevice } from '../utils/device';
 import { UndoRedoManager } from '../utils/undoRedo';
-import { saveProject, getStoredProjects, loadProject, deleteProject } from '../utils/projectStorage';
+import { saveProject, loadProject } from '../utils/projectStorage';
 import { exportImageWithLines, downloadImage } from '../utils/imageExport';
 import { t, getLanguage } from '../utils/i18n';
 
@@ -34,24 +35,12 @@ export function MeasurementApp() {
     brightness: 100,
     contrast: 100,
     rotation: 0,
-    crop: {
-      enabled: false,
-      x: 0,
-      y: 0,
-      width: 100,
-      height: 100,
-    },
   });
-  const [gridSettings, setGridSettings] = useState<GridSettings>(() => {
-    // Detect mobile and set default line thickness
-    const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    return {
-      enabled: false,
-      opacity: 10,
-      spacing: 50,
-      lineThickness: isMobile ? 8 : 3, // Thicker default on mobile
-    };
-  });
+  const [gridSettings, setGridSettings] = useState<GridSettings>(() => ({
+    enabled: false,
+    opacity: 10,
+    lineThickness: isTouchDevice() ? 8 : 3, // Thicker default on touch screens
+  }));
   const [lines, setLines] = useState<Line[]>([]);
   const [intersections, setIntersections] = useState<Point[]>([]);
   const undoRedoRef = useRef(new UndoRedoManager());
@@ -94,8 +83,9 @@ export function MeasurementApp() {
   };
 
   const handleLinesChange = (newLines: Line[]) => {
-    // Only update if lines actually changed
-    if (JSON.stringify(newLines) !== JSON.stringify(lines)) {
+    // The canvas hands back a freshly built array only on real mutations, so
+    // identity is enough — no need to stringify every line on every change.
+    if (newLines !== lines) {
       setLines(newLines);
       // Push to undo/redo history
       undoRedoRef.current.pushState({ lines: newLines });
@@ -131,8 +121,15 @@ export function MeasurementApp() {
       unit,
       timestamp: Date.now(),
     };
-    const id = saveProject(projectData);
-    alert(t('projectSaved'));
+    try {
+      saveProject(projectData);
+      alert(t('projectSaved'));
+    } catch {
+      // localStorage.setItem throws on quota exhaustion and in some private
+      // browsing modes. The exception used to escape the click handler, so
+      // nothing saved and the user was never told.
+      alert(t('projectSaveFailed'));
+    }
   };
 
   const handleLoadProject = (projectId: string) => {
@@ -141,11 +138,8 @@ export function MeasurementApp() {
       setLines(projectData.lines);
       setPaperSize(projectData.paperSize);
       setAdjustments(projectData.adjustments);
-      // Ensure lineThickness exists (for old projects)
-      setGridSettings({
-        ...projectData.gridSettings,
-        lineThickness: projectData.gridSettings.lineThickness || (typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 8 : 3),
-      });
+      // loadProject normalizes every field, so no back-filling is needed here.
+      setGridSettings(projectData.gridSettings);
       setUnit(projectData.unit);
       undoRedoRef.current.clear();
       undoRedoRef.current.pushState({ lines: projectData.lines });
@@ -157,9 +151,9 @@ export function MeasurementApp() {
   const handleExportImage = async () => {
     if (!image) return;
     try {
-      const dataUrl = await exportImageWithLines(image, lines, adjustments, gridSettings, paperSize);
+      const blob = await exportImageWithLines(image, lines, adjustments, gridSettings, paperSize);
       const paperName = paperSize.replace('-', '_');
-      downloadImage(dataUrl, `measureover-${paperName}-${Date.now()}.png`);
+      downloadImage(blob, `measureover-${paperName}-${Date.now()}.png`);
     } catch (error) {
       alert(t('exportImage') + ' - ' + (error instanceof Error ? error.message : t('error')));
       console.error(error);
@@ -210,7 +204,6 @@ export function MeasurementApp() {
                   <MeasurementCanvas
                     image={image}
                     adjustments={adjustments}
-                    paperSize={paperSize}
                     gridSettings={gridSettings}
                     lines={lines}
                     mode={mode}

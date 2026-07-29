@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'preact/hooks';
-import { getStoredTheme, saveTheme } from '../utils/theme';
+import { getStoredTheme, saveTheme, applyTheme } from '../utils/theme';
 import type { Theme } from '../types';
 import { t } from '../utils/i18n';
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() => getStoredTheme());
 
+  // Single place that touches the classes. This effect used to re-implement
+  // applyTheme inline while saveTheme also called it, so each toggle applied
+  // the theme twice.
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark', 'high-contrast');
-    root.classList.add(theme.mode);
-    if (theme.color === 'high-contrast') {
-      root.classList.add('high-contrast');
-    }
+    applyTheme(theme);
   }, [theme]);
 
   const toggleMode = () => {

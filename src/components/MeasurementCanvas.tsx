@@ -1,20 +1,20 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import type { Line, Point, ImageAdjustments, PaperSize, GridSettings } from '../types';
+import type { Line, Point, ImageAdjustments, GridSettings, CanvasMode } from '../types';
 import { findAllIntersections } from '../utils/math';
-import { applyImageFilters } from '../utils/imageFilters';
+import { applyImageFilters, needsFilters, getRotatedSize } from '../utils/imageFilters';
 import { drawGrid, calculateGridSpacing } from '../utils/grid';
 import { extendLineToEdges } from '../utils/lineExtension';
 import { findLineAtPoint } from '../utils/lineHitDetection';
+import { isTouchDevice, canHover } from '../utils/device';
 import { t } from '../utils/i18n';
 
 interface MeasurementCanvasProps {
   image: HTMLImageElement | null;
   adjustments: ImageAdjustments;
-  paperSize: PaperSize;
   gridSettings: GridSettings;
   lines: Line[];
-  mode: 'cross' | 'line' | 'delete';
-  onModeChange?: (mode: 'cross' | 'line' | 'delete') => void;
+  mode: CanvasMode;
+  onModeChange: (mode: CanvasMode) => void;
   onIntersectionsChange: (points: Point[]) => void;
   onLinesChange: (lines: Line[]) => void;
 }
@@ -22,39 +22,36 @@ interface MeasurementCanvasProps {
 export function MeasurementCanvas({
   image,
   adjustments,
-  paperSize,
   gridSettings,
   lines,
-  mode: externalMode,
+  mode,
   onModeChange,
   onIntersectionsChange,
   onLinesChange,
 }: MeasurementCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [mode, setMode] = useState<'cross' | 'line' | 'delete'>(externalMode || 'cross');
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState<{ start: Point; end: Point } | null>(null);
-  const [mousePos, setMousePos] = useState<Point | null>(null);
   const [pendingLineStart, setPendingLineStart] = useState<Point | null>(null);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const [dragAxis, setDragAxis] = useState<'x' | 'y' | null>(null);
-  const [dragPos, setDragPos] = useState<number | null>(null);
   const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
   const gridSpacingRef = useRef<number>(50);
-
-  // Sync external mode changes
-  useEffect(() => {
-    if (externalMode !== undefined) {
-      setMode(externalMode);
-    }
-  }, [externalMode]);
+  // Read inside handlers without re-subscribing window listeners on every move.
+  const dragPosRef = useRef<number | null>(null);
+  // Offscreen copy of the filtered image, reused until the image or the
+  // adjustments actually change.
+  const filteredRef = useRef<{
+    image: HTMLImageElement;
+    adjustments: ImageAdjustments;
+    canvas: HTMLCanvasElement;
+  } | null>(null);
 
   useEffect(() => {
     if (mode !== 'line') {
       setPendingLineStart(null);
       setIsDrawing(false);
       setCurrentLine(null);
-      setMousePos(null);
     }
     if (mode !== 'delete') {
       setHoveredLineId(null);
@@ -62,11 +59,41 @@ export function MeasurementCanvas({
     // Drag handles are always available; reset active drag when switching modes
     setIsDraggingHandle(false);
     setDragAxis(null);
-    setDragPos(null);
+    dragPosRef.current = null;
   }, [mode]);
 
   const setLines = (nextLines: Line[]) => {
     onLinesChange(nextLines);
+  };
+
+  /** Filtered image, memoised — the filter pass is a full getImageData/putImageData. */
+  const getFilteredImage = (
+    src: HTMLImageElement,
+    adj: ImageAdjustments,
+    width: number,
+    height: number
+  ): HTMLCanvasElement => {
+    const cached = filteredRef.current;
+    if (
+      cached &&
+      cached.image === src &&
+      cached.adjustments === adj &&
+      cached.canvas.width === width &&
+      cached.canvas.height === height
+    ) {
+      return cached.canvas;
+    }
+
+    const off = document.createElement('canvas');
+    off.width = width;
+    off.height = height;
+    if (needsFilters(adj)) {
+      applyImageFilters(off, adj, src);
+    } else {
+      off.getContext('2d')?.drawImage(src, 0, 0);
+    }
+    filteredRef.current = { image: src, adjustments: adj, canvas: off };
+    return off;
   };
 
   useEffect(() => {
@@ -76,36 +103,28 @@ export function MeasurementCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Detect mobile once for this render
-    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isTouch = isTouchDevice();
 
     const imageWidth = image.naturalWidth || image.width;
     const imageHeight = image.naturalHeight || image.height;
 
-    // Set canvas size to match image
-    canvas.width = imageWidth;
-    canvas.height = imageHeight;
+    // Size the canvas to the rotated bounding box so rotation never clips.
+    const { width: canvasWidth, height: canvasHeight } = getRotatedSize(
+      imageWidth,
+      imageHeight,
+      adjustments.rotation
+    );
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
 
-    // Calculate grid spacing based on image dimensions
-    if (imageWidth > 0 && imageHeight > 0) {
-      gridSpacingRef.current = calculateGridSpacing(imageWidth, imageHeight);
+    // Calculate grid spacing based on canvas dimensions
+    if (canvasWidth > 0 && canvasHeight > 0) {
+      gridSpacingRef.current = calculateGridSpacing(canvasWidth, canvasHeight);
     }
 
     // Draw image
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Apply filters if needed (including rotation and crop)
-    if (
-      adjustments.grayscale ||
-      adjustments.brightness !== 100 ||
-      adjustments.contrast !== 100 ||
-      adjustments.rotation !== 0 ||
-      adjustments.crop.enabled
-    ) {
-      applyImageFilters(canvas, adjustments, image);
-    } else {
-      ctx.drawImage(image, 0, 0);
-    }
+    ctx.drawImage(getFilteredImage(image, adjustments, canvasWidth, canvasHeight), 0, 0);
 
     // Check if dark mode is active
     const isDarkMode = document.documentElement.classList.contains('dark');
@@ -172,8 +191,8 @@ export function MeasurementCanvas({
     const intersections = findAllIntersections(extendedLines);
     
     // Draw intersection points - use blue with white outline for visibility
-    const pointRadius = isMobileDevice ? 10 : 6;
-    const pointInnerRadius = isMobileDevice ? 7 : 4;
+    const pointRadius = isTouch ? 10 : 6;
+    const pointInnerRadius = isTouch ? 7 : 4;
     intersections.forEach((point) => {
       // White outline for contrast
       ctx.beginPath();
@@ -189,7 +208,11 @@ export function MeasurementCanvas({
 
     // Notify parent of intersections
     onIntersectionsChange(intersections);
-  }, [image, lines, adjustments, currentLine, mousePos, gridSettings, mode, hoveredLineId, onIntersectionsChange]);
+    // `mousePos` used to sit in this list while never being read by the effect.
+    // Every mousemove set it, so merely hovering the canvas re-ran the whole
+    // draw — clear, drawImage, a full-image getImageData/putImageData filter
+    // pass, O(n^2) intersections, and a parent re-render. It is gone entirely.
+  }, [image, lines, adjustments, currentLine, gridSettings, mode, hoveredLineId, onIntersectionsChange]);
 
   const getMousePos = (e: MouseEvent | TouchEvent): Point => {
     const canvas = canvasRef.current;
@@ -217,6 +240,13 @@ export function MeasurementCanvas({
       x: (clientX - rect.left) * scaleX,
       y: (clientY - rect.top) * scaleY,
     };
+  };
+
+  const clampToCanvas = (value: number, axis: 'x' | 'y'): number => {
+    const canvas = canvasRef.current;
+    if (!canvas) return value;
+    const limit = axis === 'x' ? canvas.width : canvas.height;
+    return Math.max(0, Math.min(value, limit));
   };
 
   const createLineId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -262,7 +292,6 @@ export function MeasurementCanvas({
         setPendingLineStart(pos);
         setIsDrawing(true);
         setCurrentLine({ start: pos, end: pos });
-        setMousePos(pos);
         return;
       }
 
@@ -273,15 +302,13 @@ export function MeasurementCanvas({
       setPendingLineStart(null);
       setIsDrawing(false);
       setCurrentLine(null);
-      setMousePos(null);
     }
   };
 
   const handleMove = (e: MouseEvent | TouchEvent) => {
-    const pos = getMousePos(e);
-    setMousePos(pos);
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const pos = getMousePos(e);
 
     if (mode === 'delete') {
       const hitResult = findLineAtPoint(pos, lines, canvas.width, canvas.height);
@@ -294,26 +321,38 @@ export function MeasurementCanvas({
     setCurrentLine({ start: pendingLineStart, end: pos });
   };
 
-  const handleEnd = (e: MouseEvent | TouchEvent) => {
-    e.preventDefault();
-    if (mode !== 'line') return;
+  const previewForAxis = (axis: 'x' | 'y', value: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    return axis === 'x'
+      ? { start: { x: value, y: 0 }, end: { x: value, y: canvas.height } }
+      : { start: { x: 0, y: value }, end: { x: canvas.width, y: value } };
+  };
+
+  const commitAxisLine = (axis: 'x' | 'y', value: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    if (axis === 'x') {
+      addLine({ x: value, y: 0 }, { x: value, y: canvas.height });
+    } else {
+      addLine({ x: 0, y: value }, { x: canvas.width, y: value });
+    }
+  };
+
+  const beginHandleDrag = (axis: 'x' | 'y', rawValue: number) => {
+    // Clamp on the way in. Handles sit in the container padding, outside the
+    // canvas rect, so a plain tap used to commit a line at e.g. y = -4.
+    const clamped = clampToCanvas(rawValue, axis);
+    setIsDraggingHandle(true);
+    setDragAxis(axis);
+    dragPosRef.current = clamped;
+    setCurrentLine(previewForAxis(axis, clamped));
   };
 
   const handleHandleStart = (axis: 'x' | 'y') => (e: MouseEvent | TouchEvent) => {
     e.preventDefault();
     const pos = getMousePos(e);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const nextPos = axis === 'x' ? pos.x : pos.y;
-    setIsDraggingHandle(true);
-    setDragAxis(axis);
-    setDragPos(nextPos);
-    if (axis === 'x') {
-      setCurrentLine({ start: { x: nextPos, y: 0 }, end: { x: nextPos, y: canvas.height } });
-    } else {
-      setCurrentLine({ start: { x: 0, y: nextPos }, end: { x: canvas.width, y: nextPos } });
-    }
+    beginHandleDrag(axis, axis === 'x' ? pos.x : pos.y);
   };
 
   useEffect(() => {
@@ -321,33 +360,20 @@ export function MeasurementCanvas({
 
     const handleDragMove = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
-      const pos = getMousePos(e);
       const canvas = canvasRef.current;
       if (!canvas) return;
-
-      const limit = dragAxis === 'x' ? canvas.width : canvas.height;
-      const raw = dragAxis === 'x' ? pos.x : pos.y;
-      const clamped = Math.max(0, Math.min(raw, limit));
-      setDragPos(clamped);
-      if (dragAxis === 'x') {
-        setCurrentLine({ start: { x: clamped, y: 0 }, end: { x: clamped, y: canvas.height } });
-      } else {
-        setCurrentLine({ start: { x: 0, y: clamped }, end: { x: canvas.width, y: clamped } });
-      }
+      const pos = getMousePos(e);
+      const clamped = clampToCanvas(dragAxis === 'x' ? pos.x : pos.y, dragAxis);
+      dragPosRef.current = clamped;
+        setCurrentLine(previewForAxis(dragAxis, clamped));
     };
 
     const handleDragEnd = () => {
-      const canvas = canvasRef.current;
-      if (canvas && dragPos !== null) {
-        if (dragAxis === 'x') {
-          addLine({ x: dragPos, y: 0 }, { x: dragPos, y: canvas.height });
-        } else {
-          addLine({ x: 0, y: dragPos }, { x: canvas.width, y: dragPos });
-        }
-      }
+      const finalPos = dragPosRef.current;
+      if (finalPos !== null) commitAxisLine(dragAxis, finalPos);
       setIsDraggingHandle(false);
       setDragAxis(null);
-      setDragPos(null);
+        dragPosRef.current = null;
       setCurrentLine(null);
     };
 
@@ -364,24 +390,72 @@ export function MeasurementCanvas({
       window.removeEventListener('touchend', handleDragEnd);
       window.removeEventListener('touchcancel', handleDragEnd);
     };
-  }, [isDraggingHandle, dragAxis, dragPos]);
+    // dragPos is deliberately NOT a dependency — it changes on every pointer
+    // move, which tore down and re-attached all five listeners per frame.
+  }, [isDraggingHandle, dragAxis]);
 
   const clearLines = () => {
     setLines([]);
   };
 
+  /**
+   * Keyboard placement via the drag handles: arrows move a preview line along
+   * the axis, Enter/Space commits it, Escape cancels. Without this the app's
+   * core function is unreachable without a pointer.
+   */
+  const handleHandleKeyDown = (axis: 'x' | 'y') => (e: KeyboardEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const limit = axis === 'x' ? canvas.width : canvas.height;
+    const step = e.shiftKey ? limit / 10 : limit / 100;
+
+    const active = isDraggingHandle && dragAxis === axis;
+    const current = active && dragPosRef.current !== null ? dragPosRef.current : limit / 2;
+
+    const decrease = axis === 'x' ? 'ArrowLeft' : 'ArrowUp';
+    const increase = axis === 'x' ? 'ArrowRight' : 'ArrowDown';
+
+    if (e.key === decrease || e.key === increase) {
+      e.preventDefault();
+      const next = clampToCanvas(current + (e.key === increase ? step : -step), axis);
+      if (!active) beginHandleDrag(axis, next);
+      else {
+        dragPosRef.current = next;
+        setCurrentLine(previewForAxis(axis, next));
+      }
+      return;
+    }
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      commitAxisLine(axis, active ? current : limit / 2);
+      setIsDraggingHandle(false);
+      setDragAxis(null);
+        dragPosRef.current = null;
+      setCurrentLine(null);
+      return;
+    }
+
+    if (e.key === 'Escape' && active) {
+      e.preventDefault();
+      setIsDraggingHandle(false);
+      setDragAxis(null);
+        dragPosRef.current = null;
+      setCurrentLine(null);
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Clear lines with Escape key
-      if (e.key === 'Escape' && lines.length > 0) {
-        clearLines();
-      }
-      // Cancel pending line with Escape
-      if (e.key === 'Escape' && isDrawing) {
+      if (e.key !== 'Escape') return;
+      // Escape cancels the pending line — which is what the on-screen hint
+      // says it does. It used to ALSO run clearLines() in the same keypress
+      // whenever any line existed, so cancelling a 6th line silently deleted
+      // the first five. Clearing everything is the "Clear all" button's job.
+      if (isDrawing) {
         setIsDrawing(false);
         setPendingLineStart(null);
         setCurrentLine(null);
-        setMousePos(null);
       }
     };
 
@@ -389,7 +463,7 @@ export function MeasurementCanvas({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [lines.length, isDrawing]);
+  }, [isDrawing]);
 
   const [lineCancelStart, lineCancelEnd] = t('lineCancel').split('Esc');
 
@@ -431,10 +505,7 @@ export function MeasurementCanvas({
             {/* Prominent Mode Toggle */}
             <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700">
               <button
-                onClick={() => {
-                  setMode('cross');
-                  onModeChange?.('cross');
-                }}
+                onClick={() => onModeChange('cross')}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   mode === 'cross'
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
@@ -458,10 +529,7 @@ export function MeasurementCanvas({
                 {t('cross')}
               </button>
               <button
-                onClick={() => {
-                  setMode('line');
-                  onModeChange?.('line');
-                }}
+                onClick={() => onModeChange('line')}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   mode === 'line'
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
@@ -485,10 +553,7 @@ export function MeasurementCanvas({
                 {t('line')}
               </button>
               <button
-                onClick={() => {
-                  setMode('delete');
-                  onModeChange?.('delete');
-                }}
+                onClick={() => onModeChange('delete')}
                 class={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   mode === 'delete'
                     ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-xs'
@@ -598,7 +663,7 @@ export function MeasurementCanvas({
                   ) : (
                     <>
                       <li>{t('deleteClickLine')}</li>
-                      <li>{t('deleteHoverHint')}</li>
+                      {canHover() && <li>{t('deleteHoverHint')}</li>}
                     </>
                   )}
                   <li>{t('dragHandlesHint')}</li>
@@ -616,14 +681,8 @@ export function MeasurementCanvas({
           ref={canvasRef}
           onMouseDown={handleStart}
           onMouseMove={handleMove}
-          onMouseUp={handleEnd}
-          onMouseLeave={(e) => {
-            handleEnd(e);
-          }}
           onTouchStart={handleStart}
           onTouchMove={handleMove}
-          onTouchEnd={handleEnd}
-          onTouchCancel={handleEnd}
           class={`rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
             mode === 'delete' ? 'cursor-pointer' : 'cursor-crosshair'
           }`}
@@ -641,11 +700,13 @@ export function MeasurementCanvas({
         />
         <>
           <div class="absolute inset-x-0 top-1 flex items-center justify-center pointer-events-none">
-            <div
-              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-xs"
+            <button
+              type="button"
+              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               onMouseDown={handleHandleStart('y')}
               onTouchStart={handleHandleStart('y')}
-              aria-label={t('dragHandleTop')}
+              onKeyDown={handleHandleKeyDown('y')}
+              aria-label={`${t('dragHandleTop')} — ${t('handleKeyboardHint')}`}
               style={{
                 backgroundColor: '#1d4ed8',
                 backgroundImage:
@@ -654,11 +715,13 @@ export function MeasurementCanvas({
             />
           </div>
           <div class="absolute inset-x-0 bottom-1 flex items-center justify-center pointer-events-none">
-            <div
-              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-xs"
+            <button
+              type="button"
+              class="w-20 h-4 border border-blue-700 rounded-full pointer-events-auto cursor-row-resize shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               onMouseDown={handleHandleStart('y')}
               onTouchStart={handleHandleStart('y')}
-              aria-label={t('dragHandleBottom')}
+              onKeyDown={handleHandleKeyDown('y')}
+              aria-label={`${t('dragHandleBottom')} — ${t('handleKeyboardHint')}`}
               style={{
                 backgroundColor: '#1d4ed8',
                 backgroundImage:
@@ -667,11 +730,13 @@ export function MeasurementCanvas({
             />
           </div>
           <div class="absolute inset-y-0 left-1 flex items-center justify-center pointer-events-none">
-            <div
-              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-xs"
+            <button
+              type="button"
+              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               onMouseDown={handleHandleStart('x')}
               onTouchStart={handleHandleStart('x')}
-              aria-label={t('dragHandleLeft')}
+              onKeyDown={handleHandleKeyDown('x')}
+              aria-label={`${t('dragHandleLeft')} — ${t('handleKeyboardHint')}`}
               style={{
                 backgroundColor: '#1d4ed8',
                 backgroundImage:
@@ -680,11 +745,13 @@ export function MeasurementCanvas({
             />
           </div>
           <div class="absolute inset-y-0 right-1 flex items-center justify-center pointer-events-none">
-            <div
-              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-xs"
+            <button
+              type="button"
+              class="h-20 w-4 border border-blue-700 rounded-full pointer-events-auto cursor-col-resize shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               onMouseDown={handleHandleStart('x')}
               onTouchStart={handleHandleStart('x')}
-              aria-label={t('dragHandleRight')}
+              onKeyDown={handleHandleKeyDown('x')}
+              aria-label={`${t('dragHandleRight')} — ${t('handleKeyboardHint')}`}
               style={{
                 backgroundColor: '#1d4ed8',
                 backgroundImage:

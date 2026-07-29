@@ -31,14 +31,26 @@ export function lineIntersection(l1: Line, l2: Line): Point | null {
   return null;
 }
 
+// Two intersections closer than this are the same point as far as the user is
+// concerned; without deduping, three lines through one spot render three
+// identical coordinate cards.
+const DEDUPE_EPSILON = 0.5;
+
 export function findAllIntersections(lines: Line[]): Point[] {
   const intersections: Point[] = [];
+  const seen = new Set<string>();
+
   for (let i = 0; i < lines.length; i++) {
     for (let j = i + 1; j < lines.length; j++) {
       const intersection = lineIntersection(lines[i], lines[j]);
-      if (intersection) {
-        intersections.push(intersection);
-      }
+      if (!intersection) continue;
+
+      const key = `${Math.round(intersection.x / DEDUPE_EPSILON)}:${Math.round(
+        intersection.y / DEDUPE_EPSILON
+      )}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      intersections.push(intersection);
     }
   }
   return intersections;

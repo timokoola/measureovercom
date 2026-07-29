@@ -7,10 +7,26 @@ export function getStoredTheme(): Theme {
     return { mode: 'light', color: 'default' };
   }
 
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(THEME_STORAGE_KEY);
+  } catch {
+    stored = null;
+  }
+
   if (stored) {
     try {
-      return JSON.parse(stored) as Theme;
+      // Validate rather than cast: a corrupt value like {"mode":"x"} used to put
+      // class "x" on <html> permanently, leaving no theme applied at all.
+      const parsed = JSON.parse(stored) as Partial<Theme>;
+      const mode = parsed?.mode === 'dark' ? 'dark' : parsed?.mode === 'light' ? 'light' : null;
+      const color =
+        parsed?.color === 'high-contrast'
+          ? 'high-contrast'
+          : parsed?.color === 'default'
+            ? 'default'
+            : 'default';
+      if (mode) return { mode, color };
     } catch {
       // Invalid stored theme, use default
     }
@@ -24,10 +40,18 @@ export function getStoredTheme(): Theme {
   };
 }
 
+/**
+ * Persist only. Callers apply the theme themselves — this used to also call
+ * applyTheme, so every toggle applied the classes twice.
+ */
 export function saveTheme(theme: Theme): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme));
-  applyTheme(theme);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme));
+  } catch {
+    // Storage full or blocked (private mode). The in-memory theme still
+    // applies for this session; losing the preference is not worth an alert.
+  }
 }
 
 export function applyTheme(theme: Theme): void {
