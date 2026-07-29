@@ -115,23 +115,24 @@ export async function exportImageWithLines(
   ctx.lineJoin = 'round';
 
   lines.forEach((line) => {
-    // Scale line coordinates
+    // Scale line coordinates into image-area space (no offset yet —
+    // extendLineToEdges works in a 0,0..exportWidth,exportHeight box).
     const scaledStart = {
-      x: line.start.x * scaleX + offsetX,
-      y: line.start.y * scaleY + offsetY,
+      x: line.start.x * scaleX,
+      y: line.start.y * scaleY,
     };
     const scaledEnd = {
-      x: line.end.x * scaleX + offsetX,
-      y: line.end.y * scaleY + offsetY,
+      x: line.end.x * scaleX,
+      y: line.end.y * scaleY,
     };
-    
+
     // Extend line to edges of the image area
     const extended = extendLineToEdges(
-      { start: scaledStart, end: scaledEnd },
+      { ...line, start: scaledStart, end: scaledEnd },
       exportWidth,
       exportHeight
     );
-    // Adjust for offset
+    // Shift into page space — applied exactly once, here.
     const finalStart = {
       x: extended.start.x + offsetX,
       y: extended.start.y + offsetY,
