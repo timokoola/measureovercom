@@ -1,24 +1,52 @@
 ---
-slug: stencil-from-photo
-title: "Create a Stencil From a Photo"
-summary: "Turn a photo into a printable stencil by adding guide lines and scaling to paper size."
-category: "use-cases"
-lastUpdated: "2026-02-06"
+title: "Making a Stencil From a Photograph"
+metaDescription: "Turn a photo into a cut-ready stencil: reduce it to solid shapes, place guide lines so the shapes land in the right spot, and print at your paper size."
+h1: "Making a stencil from a photograph"
+summary: "A stencil only works if the shapes sit in the right place relative to each other. Guide lines fix those positions before anything is cut, and the 300 DPI export gives you a sheet to cut straight from."
+lastUpdated: 2026-07-29
 useCase: "stencil"
 recommendedSettings:
   paperSize: "a4"
+  unit: "mm"
   gridEnabled: true
 exampleInputs:
-  - "High-contrast subject photo"
+  - "A high-contrast photo — strong light, few mid-tones"
+  - "A silhouette or logo"
+  - "A portrait already reduced to two or three tones"
 expectedOutputs:
-  - "Printable stencil guides"
+  - "A printed sheet with guide lines for positioning the cut shapes"
+  - "Measured coordinates for marking stencil material by hand"
+related:
+  - "guides/measure-from-photo"
+  - "paper-sizes/a4"
+  - "glossary/scale"
 faqs:
-  - q: "Do I need a grid for stencils?"
-    a: "Not required, but a grid helps align repeated shapes."
+  - q: "Should I turn on the grid for stencil work?"
+    a: "Usually yes. A stencil is mostly about repeated positioning, and a grid gives you a consistent reference across the whole sheet rather than only at the points where your guide lines happen to cross."
+  - q: "How do I keep bridges in the right place?"
+    a: "Place a guide line along each bridge before cutting. The bridge positions then come across as measurements like everything else, which matters because a bridge in the wrong place is what makes a stencil fall apart."
+  - q: "What paper size should I use?"
+    a: "Whatever the finished stencil needs to be. Set that first — the coordinates are calculated against it, so measuring on A4 and cutting on A3 will put every shape in the wrong place."
+  - q: "Can I cut directly from the exported sheet?"
+    a: "Yes. The export is 300 DPI with the guide lines drawn in, so printing it at the chosen paper size gives you a full-scale template to spray-mount onto stencil material."
 ---
 
-## Steps
+## Reduce before you measure
 
-1. Upload a clear photo with good contrast.
-2. Add cross lines on key reference points.
-3. Export at your target paper size.
+A stencil is a two-tone object. Work out which areas are cut and which are left
+before placing a single guide line — grayscale and contrast help here, because
+they make it obvious where a mid-tone is going to have to commit one way or the
+other.
+
+## Position the shapes, not the outlines
+
+The instinct is to trace edges. For a stencil what matters is where each shape
+sits relative to its neighbours: a mouth two millimetres low reads as a
+different face. Put your guide lines through the anchors — eye corners, the
+centre line, the outer bounds — and let the outlines follow.
+
+## Bridges are structure
+
+Anywhere an island would float free needs a bridge, and bridges are easier to
+plan on screen than to rescue mid-cut. Mark them as guide lines so their
+positions transfer with everything else.

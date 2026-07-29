@@ -1,4 +1,15 @@
 declare module 'astro:content' {
+	interface Render {
+		'.mdx': Promise<{
+			Content: import('astro').MDXContent;
+			headings: import('astro').MarkdownHeading[];
+			remarkPluginFrontmatter: Record<string, any>;
+			components: import('astro').MDXInstance<{}>['components'];
+		}>;
+	}
+}
+
+declare module 'astro:content' {
 	export interface RenderResult {
 		Content: import('astro/runtime/server/index.js').AstroComponentFactory;
 		headings: import('astro').MarkdownHeading[];
@@ -124,7 +135,39 @@ declare module 'astro:content' {
 		: any;
 
 	type DataEntryMap = {
-		
+		"glossary": Record<string, {
+  id: string;
+  body?: string;
+  collection: "glossary";
+  data: InferEntrySchema<"glossary">;
+  rendered?: RenderedContent;
+  filePath?: string;
+}>;
+"guides": Record<string, {
+  id: string;
+  body?: string;
+  collection: "guides";
+  data: InferEntrySchema<"guides">;
+  rendered?: RenderedContent;
+  filePath?: string;
+}>;
+"paper-sizes": Record<string, {
+  id: string;
+  body?: string;
+  collection: "paper-sizes";
+  data: InferEntrySchema<"paper-sizes">;
+  rendered?: RenderedContent;
+  filePath?: string;
+}>;
+"use-cases": Record<string, {
+  id: string;
+  body?: string;
+  collection: "use-cases";
+  data: InferEntrySchema<"use-cases">;
+  rendered?: RenderedContent;
+  filePath?: string;
+}>;
+
 	};
 
 	type ExtractLoaderTypes<T> = T extends import('astro/loaders').LiveLoader<
@@ -154,6 +197,6 @@ declare module 'astro:content' {
 		LiveContentConfig['collections'][C]['loader']
 	>;
 
-	export type ContentConfig = never;
+	export type ContentConfig = typeof import("../src/content.config.js");
 	export type LiveContentConfig = never;
 }

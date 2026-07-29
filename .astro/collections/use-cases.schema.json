@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 15,
+      "maxLength": 65
+    },
+    "metaDescription": {
+      "type": "string",
+      "minLength": 70,
+      "maxLength": 165
+    },
+    "h1": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 90
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 60
+    },
+    "lastUpdated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "draft": {
+      "default": false,
+      "type": "boolean"
+    },
+    "related": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "faqs": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "minLength": 10
+          },
+          "a": {
+            "type": "string",
+            "minLength": 40
+          }
+        },
+        "required": [
+          "q",
+          "a"
+        ]
+      }
+    },
+    "useCase": {
+      "type": "string",
+      "minLength": 3
+    },
+    "recommendedSettings": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "paperSize": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string",
+          "enum": [
+            "mm",
+            "cm",
+            "inches"
+          ]
+        },
+        "gridEnabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "exampleInputs": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expectedOutputs": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "metaDescription",
+    "summary",
+    "lastUpdated",
+    "useCase"
+  ]
+}

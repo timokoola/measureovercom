@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 15,
+      "maxLength": 65
+    },
+    "metaDescription": {
+      "type": "string",
+      "minLength": 70,
+      "maxLength": 165
+    },
+    "h1": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 90
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 60
+    },
+    "lastUpdated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "draft": {
+      "default": false,
+      "type": "boolean"
+    },
+    "related": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "faqs": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "minLength": 10
+          },
+          "a": {
+            "type": "string",
+            "minLength": 40
+          }
+        },
+        "required": [
+          "q",
+          "a"
+        ]
+      }
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
+    },
+    "timeToComplete": {
+      "type": "string",
+      "minLength": 3
+    },
+    "tools": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "steps": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 5
+          },
+          "body": {
+            "type": "string",
+            "minLength": 30
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ]
+      }
+    },
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "metaDescription",
+    "summary",
+    "lastUpdated",
+    "difficulty",
+    "timeToComplete"
+  ]
+}
