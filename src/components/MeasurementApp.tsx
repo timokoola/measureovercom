@@ -176,7 +176,7 @@ export function MeasurementApp() {
   }, [canUndo, canRedo]);
 
   return (
-    <div class="min-h-screen bg-linear-to-br from-broken-white via-white to-gray-50 dark:from-dark-bg dark:via-dark-surface dark:to-dark-bg flex flex-col">
+    <div class="flex flex-col">
       <div class="p-4 md:p-8 flex-1">
         <header class="max-w-7xl mx-auto mb-12">
           <div class="flex justify-between items-start mb-4">
@@ -184,6 +184,9 @@ export function MeasurementApp() {
               <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
                 {t('appName')}
               </h1>
+              <p class="text-base text-gray-600 dark:text-gray-400 max-w-2xl">
+                {t('tagline')}
+              </p>
             </div>
             <div class="flex items-center gap-3">
               <LanguageSelector />
@@ -286,13 +289,6 @@ export function MeasurementApp() {
             </div>
           )}
         </main>
-
-        <footer class="max-w-7xl mx-auto mt-16 pt-8 pb-8 border-t border-gray-200 dark:border-gray-800">
-          <div class="flex flex-col items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
-            <p>{t('tagline')}</p>
-            <p class="text-xs">{t('footerRights')}</p>
-          </div>
-        </footer>
       </div>
     </div>
   );

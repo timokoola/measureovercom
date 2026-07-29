@@ -1,8 +1,323 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { MeasurementApp } from '../components/MeasurementApp';
+import { PAPER_SIZES } from '../utils/paperSizes';
+import type { PaperSize } from '../types';
+
+const SITE = 'https://measureover.com';
+
+// Built from PAPER_SIZES so the table can never drift from what the tool
+// actually offers — one source of truth, and the pattern the /paper-sizes/
+// pages will reuse.
+const PAPER_LABELS: Record<PaperSize, string> = {
+  a6: 'A6',
+  a5: 'A5',
+  a4: 'A4',
+  a3: 'A3',
+  a2: 'A2',
+  a1: 'A1',
+  a0: 'A0',
+  'us-letter': 'US Letter',
+  'us-legal': 'US Legal',
+  'us-tabloid': 'US Tabloid (Ledger)',
+};
+
+const PAPER_ORDER: PaperSize[] = [
+  'a6', 'a5', 'a4', 'a3', 'a2', 'a1', 'a0',
+  'us-letter', 'us-legal', 'us-tabloid',
+];
+
+const mmToIn = (mm: number) => (mm / 25.4).toFixed(2);
+const px300 = (mm: number) => Math.round((mm / 25.4) * 300);
+
+const paperRows = PAPER_ORDER.map((size) => {
+  const { width, height } = PAPER_SIZES[size];
+  return {
+    size,
+    label: PAPER_LABELS[size],
+    mm: `${width} × ${height} mm`,
+    inches: `${mmToIn(width)} × ${mmToIn(height)} in`,
+    px: `${px300(width)} × ${px300(height)} px`,
+  };
+});
+
+const steps = [
+  {
+    title: 'Open a reference photo',
+    body: 'Drag an image in or pick a file. It is decoded in your browser — nothing is uploaded to a server, so there is no wait and no account.',
+  },
+  {
+    title: 'Lay down guide lines',
+    body: 'Click once in cross mode to drop a paired horizontal and vertical guide. Line mode places a single guide between two points, and the edge handles slide a straight guide in from any side. Every guide extends across the whole image.',
+  },
+  {
+    title: 'Read the intersections',
+    body: 'Wherever two guides cross, MeasureOver reports that point in millimetres, centimetres or inches — measured against the paper size you picked, not against pixels.',
+  },
+  {
+    title: 'Print it, or copy the points across',
+    body: 'Export a 300 DPI PNG with the guides burned in and print it at your paper size, or keep the numbers on screen and mark the same points on your sheet by hand.',
+  },
+];
+
+const faqs = [
+  {
+    q: 'How do I scale a drawing from a photo?',
+    a: 'Place a few guide lines over the photo at features you can identify — a corner, an edge, the centre of an eye. MeasureOver converts each intersection into a real measurement on your chosen paper size. Mark those same coordinates on your sheet and you have transferred the proportions without pencilling a grid over the original.',
+  },
+  {
+    q: 'Are the measurements accurate?',
+    a: 'The coordinates are exact for the paper size you select. The image is fitted to the sheet preserving its aspect ratio, and every intersection is converted through that fit, so a point reported at 84.2 mm sits 84.2 mm from the edge of the printed sheet. Accuracy against the real-world subject still depends on the photo being taken square-on, without perspective distortion or lens barrelling.',
+  },
+  {
+    q: 'Do my images get uploaded anywhere?',
+    a: 'No. The image never leaves your device. All decoding, drawing and exporting happens in the browser, there is no server component, no account and no cookie banner. You can disconnect from the network after the page loads and the tool keeps working.',
+  },
+  {
+    q: 'Which paper sizes are supported?',
+    a: 'A6 through A0, plus US Letter, US Legal and US Tabloid — ten sizes in total. Coordinates and exports are calculated against the exact millimetre dimensions of whichever you choose.',
+  },
+  {
+    q: 'What resolution does the export use?',
+    a: 'PNG at 300 DPI, the standard for printed line work — A4 comes out at 2480 × 3508 pixels. Very large sheets are rendered at a lower DPI so the export cannot exceed what your browser is able to rasterise; A4 and smaller always use the full 300 DPI.',
+  },
+  {
+    q: 'Can I use it on a phone or tablet?',
+    a: 'Yes. Guides are placed by tapping, the edge handles are draggable by touch, and line thickness and hit targets are enlarged automatically on touch screens.',
+  },
+  {
+    q: 'Is it really free?',
+    a: 'Yes, and there is nothing to sign up for. MeasureOver is a single static page with no back end to pay for.',
+  },
+];
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'MeasureOver',
+    url: SITE,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Any (web browser)',
+    description:
+      'A free, browser-based tool for scaling a drawing from a photo. Draw measurement guides over an image and read the intersections in millimetres, centimetres or inches against a chosen paper size.',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    featureList: [
+      'Measurement guides over any image',
+      'Coordinates in mm, cm or inches',
+      'Ten paper sizes from A6 to A0 plus US Letter, Legal and Tabloid',
+      '300 DPI PNG export with guides',
+      'Runs entirely in the browser — no upload',
+    ],
+    isAccessibleForFree: true,
+    inLanguage: ['en', 'fi', 'sv', 'fr', 'es', 'de'],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
 ---
 
-<Layout title="MeasureOver - Image Measurement Tool">
+<Layout
+  title="MeasureOver — Scale a Drawing From a Photo"
+  description="Free browser tool for scaling a drawing from a photo. Draw measurement guides over an image and read every intersection in mm, cm or inches against A6–A0, US Letter, Legal or Tabloid. Exports at 300 DPI. Nothing is uploaded."
+>
+  {
+    jsonLd.map((block) => (
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(block)} />
+    ))
+  }
+
   <MeasurementApp client:load />
+
+  <div class="px-4 md:px-8">
+    <div class="max-w-3xl mx-auto pt-16 md:pt-24 space-y-16 md:space-y-20">
+      <section aria-labelledby="what-it-does">
+        <h2
+          id="what-it-does"
+          class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-4"
+        >
+          Get the proportions right, on paper
+        </h2>
+        <div class="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+          <p>
+            Copying a photograph by hand goes wrong in the same place every time: not
+            in the shading, but in the layout. An eye lands a few millimetres too far
+            left, a roofline sits too high, and by the time it is obvious the drawing
+            is too far along to rescue.
+          </p>
+          <p>
+            The traditional fix is to rule a grid over the reference and a matching
+            grid over the paper. It works, and it means drawing all over both.{' '}
+            <strong class="font-semibold text-gray-900 dark:text-gray-100"
+              >MeasureOver does the same job without the pencil work.</strong
+            >{' '}
+            Drop guide lines onto the photo on screen, and every place two of them
+            cross is reported as a real measurement on the sheet in front of you —
+            84.2 mm in, 120.5 mm down. Mark those points and the proportions are
+            already correct before a single line is drawn.
+          </p>
+          <p>
+            It is useful anywhere a reference has to become a physical drawing at a
+            known size: portraits and figure work, stencils and sign painting, pattern
+            drafting, marquetry and inlay layout, murals scaled up from a small study,
+            and transferring a design onto a workpiece before cutting.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="how-it-works">
+        <h2
+          id="how-it-works"
+          class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-6"
+        >
+          How it works
+        </h2>
+        <ol class="space-y-5">
+          {
+            steps.map((step, i) => (
+              <li class="flex gap-4">
+                <span
+                  class="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-burnt-orange/10 dark:bg-burnt-orange/20 text-burnt-orange font-semibold text-sm"
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                    {step.title}
+                  </h3>
+                  <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {step.body}
+                  </p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <section aria-labelledby="paper-sizes">
+        <h2
+          id="paper-sizes"
+          class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-4"
+        >
+          Supported paper sizes
+        </h2>
+        <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+          Coordinates are calculated against the exact dimensions below, so switching
+          size re-measures the whole image instantly. The last column is what a 300
+          DPI export produces for that sheet.
+        </p>
+        <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-dark-surface">
+          <table class="w-full text-sm text-left">
+            <caption class="sr-only">
+              Paper sizes supported by MeasureOver, with dimensions in millimetres and
+              inches and the pixel size of a 300 DPI export
+            </caption>
+            <thead
+              class="border-b border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400"
+            >
+              <tr>
+                <th scope="col" class="px-4 py-3 font-semibold">Size</th>
+                <th scope="col" class="px-4 py-3 font-semibold">Millimetres</th>
+                <th scope="col" class="px-4 py-3 font-semibold">Inches</th>
+                <th scope="col" class="px-4 py-3 font-semibold">At 300 DPI</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+              {
+                paperRows.map((row) => (
+                  <tr>
+                    <th
+                      scope="row"
+                      class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap"
+                    >
+                      {row.label}
+                    </th>
+                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      {row.mm}
+                    </td>
+                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      {row.inches}
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap font-mono text-xs">
+                      {row.px}
+                    </td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-4">
+          Measurements display in millimetres, centimetres or inches — the unit
+          changes how the numbers are shown, never the underlying geometry.
+        </p>
+      </section>
+
+      <section aria-labelledby="privacy">
+        <h2
+          id="privacy"
+          class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-4"
+        >
+          Your photos stay on your device
+        </h2>
+        <div class="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+          <p>
+            There is no upload step, because there is no server to upload to.
+            MeasureOver is a static page: the image is decoded, measured and exported
+            by your own browser and never crosses the network. That means no account,
+            no storage limits, no cookie banner, and no question about who else can
+            see a client's reference photograph.
+          </p>
+          <p>
+            Saved projects — your guide lines, paper size and settings — are kept in
+            your browser's local storage on that device only. Once the page has loaded
+            you can go offline entirely and it will keep working. The only third-party
+            script on the site is a privacy-preserving page-view counter that sets no
+            cookies and collects no personal data.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="faq">
+        <h2
+          id="faq"
+          class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-6"
+        >
+          Common questions
+        </h2>
+        <dl class="space-y-6">
+          {
+            faqs.map((faq) => (
+              <div>
+                <dt class="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  {faq.q}
+                </dt>
+                <dd class="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {faq.a}
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+    </div>
+  </div>
+
+  <footer
+    class="max-w-3xl mx-auto px-4 md:px-8 mt-20 pt-8 pb-12 border-t border-gray-200 dark:border-gray-800"
+  >
+    <div class="flex flex-col items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
+      <p>Free, client-only measurement tool for scaling drawings from photos.</p>
+      <p class="text-xs">© 2026 Timo Koola. All rights reserved.</p>
+    </div>
+  </footer>
 </Layout>
