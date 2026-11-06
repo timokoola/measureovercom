@@ -109,15 +109,18 @@ scanner rotates through Claude-User, Perplexity-User, DeepSeekBot, Kimi and
 others while probing `/.env`, `service-account.json` and similar. Before the
 404 page existed those probes all got a 200, which kept them coming.
 
-### `www` is broken
+### `www` and other subdomains
 
-`https://www.measureover.com` returns **522**: only the apex is attached to
-the Pages project, and a wildcard DNS record sends every other subdomain
-(`www`, `app.api`, `dev.staging`, …) to an origin that does not answer.
-Search Console has indexed `http://www.measureover.com/` as a separate page.
-Fix in the dashboard (needs DNS edit, which the wrangler OAuth grant lacks):
-delete the wildcard record, add `www` as a Pages custom domain or a redirect
-rule `www.measureover.com/* → https://measureover.com/$1` (301).
+`www.measureover.com/*` (http and https) 301s to `https://measureover.com/…`,
+keeping path and query string. That is a zone Redirect Rule ("Redirect from
+WWW to root"), and the `www` DNS record is a proxied placeholder
+(`A 192.0.2.1`) that exists only so Cloudflare receives the request; it never
+reaches an origin.
+
+Until 2026-11-06, `www` and a `*` wildcard still pointed at Hover's old
+forwarding server (216.40.34.41) from when the domain moved to Cloudflare, so
+`https://www` returned 522 and every made-up subdomain resolved. The wildcard
+was deleted. The MX and the two Hover NS records were left as they are.
 
 ### Google Search Console
 
