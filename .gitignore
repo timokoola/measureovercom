@@ -27,3 +27,6 @@ pnpm-debug.log*
 *.swp
 *.swo
 *~
+
+# wrangler local state (pages dev)
+.wrangler/

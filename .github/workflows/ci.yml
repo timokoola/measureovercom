@@ -39,7 +39,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Check robots.txt and sitemap are present
+      - name: Check crawler- and agent-facing files are present
         run: |
-          test -s dist/robots.txt || { echo "dist/robots.txt missing"; exit 1; }
-          test -s dist/sitemap-index.xml || { echo "dist/sitemap-index.xml missing"; exit 1; }
+          # 404.html matters most: without it Pages answers every unknown URL
+          # with the homepage and a 200.
+          for f in robots.txt sitemap-index.xml 404.html llms.txt AGENTS.md \
+                   paper-sizes.json .well-known/security.txt _headers _redirects; do
+            test -s "dist/$f" || { echo "dist/$f missing"; exit 1; }
+          done

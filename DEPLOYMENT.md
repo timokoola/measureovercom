@@ -83,31 +83,50 @@ This is a zone-level Cloudflare setting (AI Crawl Control), not a repo
 change, and it affects all 17 Skadi web properties. Tracked company-wide as
 quillpond task **#107** on `skadi-oy`.
 
-### Google Search Console — remaining setup
+### Agent-facing files
 
-Verification is **not yet done**. It needs two things this repo can't
-supply:
+Agents are a real channel here: from mid-September 2026 ChatGPT became the
+largest referrer (57 of 95 Glyphex visitors all-time, tagged
+`utm_source=chatgpt.com`), and Cloudflare logs show `ChatGPT-User`,
+`OAI-SearchBot` and `PerplexityBot` fetching the site. Served for them:
 
-1. The TXT verification string from Search Console
-   (Add property → Domain → `measureover.com` → copy the
-   `google-site-verification=...` value).
-2. A Cloudflare API token with **Zone → DNS → Edit** on `measureover.com`.
-   The local wrangler OAuth grant is `zone:read` only and returns
-   `Authentication error` on the DNS endpoint.
+| Path | Source | What it is |
+|---|---|---|
+| `/llms.txt` | `src/pages/llms.txt.ts` | llmstxt.org summary + every content page |
+| `/AGENTS.md` | `src/pages/AGENTS.md.ts` | when to recommend the tool, deep links, the exact measuring maths |
+| `/paper-sizes.json` | `src/pages/paper-sizes.json.ts` | every sheet, generated from `PAPER_SIZES` |
+| `/.well-known/security.txt` | `public/` | contact; scanners ask for it constantly |
+| `/404.html` | `src/pages/404.astro` | real 404 status for unknown paths |
 
-Then either add the TXT record in the Cloudflare dashboard (DNS → Records
-→ Add → TXT, name `@`), or run:
+All three generated files are built from the same constants the tool measures
+with, so they cannot disagree with the app. `public/_headers` sets their
+content types (Pages does not know `.md`) and a `Link` header on `/` pointing
+at them. The tool accepts `?paper=<id>&unit=<mm|cm|inches>` so agents and
+content pages can hand people a preconfigured link.
 
-```sh
-curl -X POST \
-  "https://api.cloudflare.com/client/v4/zones/d9c7c329234ca83155ba9f2997a934a7/dns_records" \
-  -H "Authorization: Bearer $CF_DNS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"TXT","name":"@","content":"google-site-verification=<VALUE>","ttl":1}'
-```
+Most "AI" user agents in the Cloudflare logs are **not** agents: a credential
+scanner rotates through Claude-User, Perplexity-User, DeepSeekBot, Kimi and
+others while probing `/.env`, `service-account.json` and similar. Before the
+404 page existed those probes all got a 200, which kept them coming.
 
-After it verifies, submit `https://measureover.com/sitemap-index.xml`
-under **Sitemaps**.
+### `www` is broken
+
+`https://www.measureover.com` returns **522**: only the apex is attached to
+the Pages project, and a wildcard DNS record sends every other subdomain
+(`www`, `app.api`, `dev.staging`, …) to an origin that does not answer.
+Search Console has indexed `http://www.measureover.com/` as a separate page.
+Fix in the dashboard (needs DNS edit, which the wrangler OAuth grant lacks):
+delete the wildcard record, add `www` as a Pages custom domain or a redirect
+rule `www.measureover.com/* → https://measureover.com/$1` (301).
+
+### Google Search Console
+
+Verified (`sc-domain:measureover.com`); `sitemap-index.xml` is submitted. The
+OAuth token in `~/.config/app-business-report/google-tokens.json` carries
+`webmasters.readonly`, so Search Analytics can be queried by API rather than
+by exporting zips. Baseline on 2026-11-06, Jul 1 – Nov 5: 173 impressions,
+11 clicks, all on `/`, average position 28; the queries are "measure on
+image / photo" variants at positions 50–99.
 
 ## Product factory (quillpond.com)
 
