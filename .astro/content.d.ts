@@ -142,6 +142,7 @@ declare module 'astro:content' {
   data: InferEntrySchema<"glossary">;
   rendered?: RenderedContent;
   filePath?: string;
+  digest?: string | number;
 }>;
 "guides": Record<string, {
   id: string;
@@ -150,6 +151,7 @@ declare module 'astro:content' {
   data: InferEntrySchema<"guides">;
   rendered?: RenderedContent;
   filePath?: string;
+  digest?: string | number;
 }>;
 "paper-sizes": Record<string, {
   id: string;
@@ -158,6 +160,7 @@ declare module 'astro:content' {
   data: InferEntrySchema<"paper-sizes">;
   rendered?: RenderedContent;
   filePath?: string;
+  digest?: string | number;
 }>;
 "use-cases": Record<string, {
   id: string;
@@ -166,6 +169,7 @@ declare module 'astro:content' {
   data: InferEntrySchema<"use-cases">;
   rendered?: RenderedContent;
   filePath?: string;
+  digest?: string | number;
 }>;
 
 	};
