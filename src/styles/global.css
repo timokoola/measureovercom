@@ -57,3 +57,28 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Authored MDX body on content pages. Hand-rolled rather than pulling in
+   @tailwindcss/typography for the handful of elements the content uses. */
+@layer components {
+  .content-prose h2 {
+    @apply text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mt-12 mb-4;
+  }
+  .content-prose h3 {
+    @apply text-lg font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-2;
+  }
+  .content-prose p,
+  .content-prose ul,
+  .content-prose ol {
+    @apply text-gray-700 dark:text-gray-300 leading-relaxed mb-4;
+  }
+  .content-prose ul {
+    @apply list-disc pl-6;
+  }
+  .content-prose ol {
+    @apply list-decimal pl-6;
+  }
+  .content-prose a {
+    @apply text-burnt-orange underline underline-offset-2;
+  }
+}

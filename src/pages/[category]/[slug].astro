@@ -1,0 +1,256 @@
+---
+import { getEntry, render } from 'astro:content';
+import ContentLayout from '../../layouts/ContentLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import {
+  CATEGORY_LABELS,
+  canonicalPath,
+  getAllSlugs,
+  getPageData,
+  getRelatedPages,
+  type CategoryName,
+} from '../../data';
+import { PAPER_LABELS, PAPER_ORDER } from '../../data/paperSizes';
+import { PAPER_SIZES } from '../../utils/paperSizes';
+
+export async function getStaticPaths() {
+  const slugs = await getAllSlugs();
+  return slugs.map(({ category, slug }) => ({ params: { category, slug } }));
+}
+
+const category = Astro.params.category as CategoryName;
+const slug = Astro.params.slug as string;
+const page = await getPageData(category, slug);
+// getStaticPaths only yields slugs the data layer knows, so this is a build-time
+// invariant, not a runtime 404 path.
+if (!page) throw new Error(`No page data for ${category}/${slug}`);
+
+const related = await getRelatedPages(category, slug, 4);
+
+// Authored prose is rendered through Astro rather than from `page.body` so MDX
+// components and headings work. Paper sizes only have it when an overlay exists.
+const entry = page.body === null ? undefined : await getEntry(category, slug);
+const Body = entry ? (await render(entry)).Content : null;
+
+const site = Astro.site ?? new URL('https://measureover.com');
+const url = new URL(page.canonicalPath, site).href;
+
+/** Link into the tool already set to the sheet this page is about. */
+const toolLink = (paper?: string, unit?: string) => {
+  const params = new URLSearchParams();
+  if (paper) params.set('paper', paper);
+  if (unit) params.set('unit', unit);
+  const q = params.toString();
+  return q ? `/?${q}` : '/';
+};
+
+const jsonLd: Record<string, unknown>[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': page.category === 'glossary' ? 'DefinedTerm' : 'Article',
+    ...(page.category === 'glossary'
+      ? { name: page.term, description: page.definition, url }
+      : {
+          headline: page.h1,
+          description: page.metaDescription,
+          url,
+          dateModified: page.lastModified,
+          author: { '@type': 'Person', name: 'Timo Koola' },
+          publisher: { '@type': 'Organization', name: 'MeasureOver', url: site.href },
+        }),
+  },
+];
+
+let toolHref = '/';
+let otherSizes: { label: string; path: string; mm: string }[] = [];
+if (page.category === 'paper-sizes') {
+  toolHref = toolLink(page.paperSize);
+} else if (page.category === 'use-cases') {
+  toolHref = toolLink(page.recommendedSettings.paperSize, page.recommendedSettings.unit);
+}
+if (page.category === 'paper-sizes') {
+  otherSizes = PAPER_ORDER.filter((size) => size !== slug).map((size) => ({
+    label: PAPER_LABELS[size],
+    path: canonicalPath('paper-sizes', size),
+    mm: `${PAPER_SIZES[size].width} × ${PAPER_SIZES[size].height} mm`,
+  }));
+}
+
+const h2 = 'text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mt-12 mb-4';
+const cell = 'px-4 py-3 text-gray-700 dark:text-gray-300';
+---
+
+<ContentLayout title={`${page.title} | MeasureOver`} description={page.metaDescription}>
+  <script slot="head" type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+  <Breadcrumbs
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: CATEGORY_LABELS[category], path: `/${category}/` },
+      { name: page.h1, path: page.canonicalPath },
+    ]}
+  />
+
+  <article>
+    <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mb-4">
+      {page.h1}
+    </h1>
+    <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">{page.summary}</p>
+
+    {
+      page.category === 'paper-sizes' && (
+        <>
+          <div class="mt-8 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-dark-surface">
+            <table class="w-full text-sm text-left">
+              <caption class="sr-only">{page.label} dimensions</caption>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                <tr><th scope="row" class={cell}>Millimetres</th><td class={cell}>{page.widthMm} × {page.heightMm} mm</td></tr>
+                <tr><th scope="row" class={cell}>Centimetres</th><td class={cell}>{page.widthMm / 10} × {page.heightMm / 10} cm</td></tr>
+                <tr><th scope="row" class={cell}>Inches</th><td class={cell}>{page.widthIn} × {page.heightIn} in</td></tr>
+                <tr><th scope="row" class={cell}>Aspect ratio</th><td class={cell}>{page.aspectRatio}</td></tr>
+                <tr><th scope="row" class={cell}>Pixels at 300 DPI</th><td class={cell}>{page.pixelsAt300Dpi.width} × {page.pixelsAt300Dpi.height} px</td></tr>
+                <tr><th scope="row" class={cell}>Series</th><td class={cell}>{page.series === 'ISO A' ? 'ISO 216 A series' : 'North American (ANSI)'}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h2 class={h2}>How {page.label} compares</h2>
+          <ul class="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300 leading-relaxed">
+            {page.comparisons.map((c) => <li>{c}</li>)}
+          </ul>
+          <h2 class={h2}>What {page.label} is used for</h2>
+          <ul class="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+            {page.commonUseCases.map((u) => <li>{u}</li>)}
+          </ul>
+        </>
+      )
+    }
+
+    {
+      page.category === 'guides' && (
+        <>
+          <dl class="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+            <div><dt class="text-gray-500">Difficulty</dt><dd class="font-medium capitalize text-gray-900 dark:text-gray-100">{page.difficulty}</dd></div>
+            <div><dt class="text-gray-500">Time</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{page.timeToComplete}</dd></div>
+            {page.tools.length > 0 && (
+              <div class="col-span-2 sm:col-span-1"><dt class="text-gray-500">You need</dt><dd class="font-medium text-gray-900 dark:text-gray-100">{page.tools.join(', ')}</dd></div>
+            )}
+          </dl>
+          {page.steps.length > 0 && (
+            <>
+              <h2 class={h2}>Steps</h2>
+              <ol class="space-y-5">
+                {page.steps.map((step, i) => (
+                  <li class="flex gap-4">
+                    <span class="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-burnt-orange/10 text-burnt-orange font-semibold text-sm" aria-hidden="true">{i + 1}</span>
+                    <div>
+                      <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">{step.title}</h3>
+                      <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{step.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+        </>
+      )
+    }
+
+    {
+      page.category === 'use-cases' && (
+        <div class="mt-8 grid gap-6 sm:grid-cols-2">
+          {page.exampleInputs.length > 0 && (
+            <div>
+              <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Works well with</h2>
+              <ul class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">{page.exampleInputs.map((x) => <li>{x}</li>)}</ul>
+            </div>
+          )}
+          {page.expectedOutputs.length > 0 && (
+            <div>
+              <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">What you get</h2>
+              <ul class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">{page.expectedOutputs.map((x) => <li>{x}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    {
+      page.category === 'glossary' && (
+        <div class="mt-8 rounded-xl border-l-4 border-burnt-orange bg-white dark:bg-dark-surface p-5">
+          <p class="text-gray-900 dark:text-gray-100 leading-relaxed"><strong>{page.term}:</strong> {page.definition}</p>
+          {page.relatedTerms.length > 0 && (
+            <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">Related terms: {page.relatedTerms.join(', ')}</p>
+          )}
+        </div>
+      )
+    }
+
+    {
+      Body && (
+        <div class="content-prose mt-4">
+          <Body />
+        </div>
+      )
+    }
+
+    <p class="mt-10">
+      <a
+        href={toolHref}
+        class="inline-block rounded-lg bg-burnt-orange hover:bg-burnt-orange-hover text-white font-semibold px-5 py-3"
+      >
+        {page.category === 'paper-sizes' ? `Measure a photo on ${page.label}` : 'Open MeasureOver'}
+      </a>
+    </p>
+
+    {
+      page.faqs.length > 0 && (
+        <section aria-labelledby="faq">
+          <h2 id="faq" class={h2}>Questions</h2>
+          <dl class="space-y-6">
+            {page.faqs.map((f) => (
+              <div>
+                <dt class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{f.q}</dt>
+                <dd class="text-gray-700 dark:text-gray-300 leading-relaxed">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )
+    }
+  </article>
+
+  {
+    otherSizes.length > 0 && (
+      <section aria-labelledby="other-sizes">
+        <h2 id="other-sizes" class={h2}>Other paper sizes</h2>
+        <ul class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+          {otherSizes.map((s) => (
+            <li>
+              <a href={s.path} class="block rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-dark-surface px-3 py-2 hover:border-burnt-orange">
+                <span class="font-semibold text-gray-900 dark:text-gray-100">{s.label}</span>
+                <span class="block text-gray-600 dark:text-gray-400">{s.mm}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {
+    related.length > 0 && (
+      <section aria-labelledby="related">
+        <h2 id="related" class={h2}>Related</h2>
+        <ul class="grid gap-4 sm:grid-cols-2">
+          {related.map((r) => (
+            <li>
+              <a href={r.canonicalPath} class="block h-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-dark-surface p-5 hover:border-burnt-orange">
+                <span class="text-xs uppercase tracking-wide text-gray-500">{CATEGORY_LABELS[r.category]}</span>
+                <span class="block font-semibold text-gray-900 dark:text-gray-100 mt-1">{r.h1}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</ContentLayout>

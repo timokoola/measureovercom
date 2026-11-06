@@ -1,3 +1,10 @@
 # Astro's sitemap integration emits sitemap-index.xml. Keep the conventional
 # /sitemap.xml URL working for crawlers and anything already pointing at it.
 /sitemap.xml  /sitemap-index.xml  301
+
+# Common variants agents and browsers probe for. Without these the 404 page
+# answers, which is correct but less useful than the real file.
+/favicon.ico              /favicon.svg        301
+/agents.md                /AGENTS.md          301
+/.well-known/llms.txt     /llms.txt           301
+/llms-full.txt            /llms.txt           302

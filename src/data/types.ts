@@ -110,6 +110,8 @@ export interface PaperSizePage extends BaseSEOContent {
   pixelsAt300Dpi: { width: number; height: number };
   series: 'ISO A' | 'US';
   commonUseCases: string[];
+  /** Generated facts relating this sheet to its neighbours and the other system. */
+  comparisons: string[];
 }
 
 export type AnyPage = GuidePage | UseCasePage | GlossaryPage | PaperSizePage;

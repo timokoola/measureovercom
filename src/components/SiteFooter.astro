@@ -1,0 +1,66 @@
+---
+import { getAllCategories, getPagesByCategory } from '../data';
+
+// Every page links to every hub and every paper size, so nothing generated is
+// ever reachable only through the sitemap.
+const categories = (await getAllCategories()).filter((c) => c.count > 0);
+const paperSizes = await getPagesByCategory('paper-sizes');
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-20 border-t border-gray-200 dark:border-gray-800">
+  <div class="max-w-5xl mx-auto px-4 md:px-8 py-12 grid gap-10 sm:grid-cols-2 md:grid-cols-4 text-sm">
+    <div class="space-y-2 sm:col-span-2 md:col-span-1">
+      <a href="/" class="font-bold text-gray-900 dark:text-gray-100">MeasureOver</a>
+      <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+        Free, client-only tool for measuring on a photo and scaling it to paper.
+      </p>
+    </div>
+
+    <nav aria-label="Sections" class="space-y-2">
+      <h2 class="font-semibold text-gray-900 dark:text-gray-100">Learn</h2>
+      <ul class="space-y-1.5">
+        {
+          categories.map((c) => (
+            <li>
+              <a
+                href={c.path}
+                class="text-gray-600 dark:text-gray-400 hover:text-burnt-orange"
+              >
+                {c.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <nav aria-label="Paper sizes" class="space-y-2">
+      <h2 class="font-semibold text-gray-900 dark:text-gray-100">Paper sizes</h2>
+      <ul class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        {
+          paperSizes.map((p) => (
+            <li>
+              <a
+                href={p.canonicalPath}
+                class="text-gray-600 dark:text-gray-400 hover:text-burnt-orange whitespace-nowrap"
+              >
+                {p.h1.replace(/ paper size$/, '')}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <nav aria-label="For AI agents" class="space-y-2">
+      <h2 class="font-semibold text-gray-900 dark:text-gray-100">For agents</h2>
+      <ul class="space-y-1.5">
+        <li><a href="/llms.txt" class="text-gray-600 dark:text-gray-400 hover:text-burnt-orange">llms.txt</a></li>
+        <li><a href="/AGENTS.md" class="text-gray-600 dark:text-gray-400 hover:text-burnt-orange">AGENTS.md</a></li>
+        <li><a href="/paper-sizes.json" class="text-gray-600 dark:text-gray-400 hover:text-burnt-orange">paper-sizes.json</a></li>
+      </ul>
+    </nav>
+  </div>
+  <p class="pb-10 text-center text-xs text-gray-500">© {year} Timo Koola. All rights reserved.</p>
+</footer>

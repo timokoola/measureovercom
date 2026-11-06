@@ -62,6 +62,56 @@ function seriesOf(size: PaperSize): 'ISO A' | 'US' {
   return size.startsWith('us-') ? 'US' : 'ISO A';
 }
 
+const ISO_ORDER: PaperSize[] = ['a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6'];
+const US_ORDER: PaperSize[] = ['us-letter', 'us-legal', 'us-tabloid'];
+
+/** The sheet in the other system with the closest area. */
+function nearestCounterpart(size: PaperSize): PaperSize {
+  const area = (s: PaperSize) => PAPER_SIZES[s].width * PAPER_SIZES[s].height;
+  const pool = size.startsWith('us-') ? ISO_ORDER : US_ORDER;
+  return pool.reduce((best, s) =>
+    Math.abs(area(s) - area(size)) < Math.abs(area(best) - area(size)) ? s : best
+  );
+}
+
+function fmt(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
+function generatedComparisons(size: PaperSize): string[] {
+  const { width, height } = PAPER_SIZES[size];
+  const label = PAPER_LABELS[size];
+  const areaM2 = (width * height) / 1_000_000;
+  const out: string[] = [];
+
+  const i = ISO_ORDER.indexOf(size);
+  if (i > 0) {
+    out.push(`Two ${label} sheets side by side make one ${PAPER_LABELS[ISO_ORDER[i - 1]]}; ${label} is ${PAPER_LABELS[ISO_ORDER[i - 1]]} folded in half.`);
+  }
+  if (i >= 0 && i < ISO_ORDER.length - 1) {
+    out.push(`Fold ${label} in half across its long side and you get ${PAPER_LABELS[ISO_ORDER[i + 1]]}, the same shape at half the area.`);
+  }
+  if (i >= 0) {
+    out.push(`Its area is ${Number(areaM2.toPrecision(3))} m² — A0 is defined as 1 m², and each step down halves it.`);
+  } else {
+    out.push(`Its area is ${(areaM2 * 10_000).toFixed(0)} cm² (${round2((width * height) / 645.16)} in²).`);
+  }
+
+  const other = nearestCounterpart(size);
+  const o = PAPER_SIZES[other];
+  // Only worth saying when the two are genuine alternatives for the same job.
+  const ratio = (width * height) / (o.width * o.height);
+  if (ratio < 0.75 || ratio > 1.33) return out;
+  const dw = width - o.width;
+  const dh = height - o.height;
+  const side = (d: number, wide: string, narrow: string) =>
+    Math.abs(d) < 0.05 ? `the same ${wide === 'wider' ? 'width' : 'height'}` : `${fmt(Math.abs(d))} mm ${d > 0 ? wide : narrow}`;
+  out.push(
+    `The closest ${other.startsWith('us-') ? 'US' : 'ISO'} sheet is ${PAPER_LABELS[other]} (${o.width} × ${o.height} mm): ${label} is ${side(dw, 'wider', 'narrower')} and ${side(dh, 'taller', 'shorter')}, so a layout made for one will not drop onto the other without rescaling.`
+  );
+  return out;
+}
+
 function generatedFaqs(size: PaperSize): FAQ[] {
   const { width, height } = PAPER_SIZES[size];
   const label = PAPER_LABELS[size];
@@ -135,6 +185,7 @@ export function buildPaperSizePage(
     commonUseCases: overlay?.commonUseCases?.length
       ? overlay.commonUseCases
       : DEFAULT_USE_CASES[size],
+    comparisons: generatedComparisons(size),
   };
 }
 

@@ -1,0 +1,34 @@
+---
+import ContentLayout from '../layouts/ContentLayout.astro';
+import { getAllCategories } from '../data';
+
+// Cloudflare Pages serves this with a real 404 status. Without it, every
+// unknown URL fell back to the homepage with a 200 — so crawlers indexed
+// duplicates and agents probing for /llms.txt-style files got HTML back.
+const categories = (await getAllCategories()).filter((c) => c.count > 0);
+---
+
+<ContentLayout
+  title="Page not found | MeasureOver"
+  description="This page does not exist. MeasureOver is a free browser tool for measuring on a photo and scaling it to paper."
+  noindex
+>
+  <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mb-4">
+    Page not found
+  </h1>
+  <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-8">
+    There is nothing at this address. The measuring tool is on the
+    <a href="/" class="text-burnt-orange underline underline-offset-2">homepage</a>, or
+    try one of these:
+  </p>
+  <ul class="space-y-2">
+    {
+      categories.map((c) => (
+        <li>
+          <a href={c.path} class="font-semibold text-burnt-orange hover:underline">{c.label}</a>
+          <span class="text-gray-600 dark:text-gray-400"> — {c.description}</span>
+        </li>
+      ))
+    }
+  </ul>
+</ContentLayout>

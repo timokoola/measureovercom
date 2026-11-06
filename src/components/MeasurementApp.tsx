@@ -24,6 +24,9 @@ import { UndoRedoManager } from '../utils/undoRedo';
 import { saveProject, loadProject } from '../utils/projectStorage';
 import { exportImageWithLines, downloadImage } from '../utils/imageExport';
 import { t, getLanguage } from '../utils/i18n';
+import { PAPER_SIZES } from '../utils/paperSizes';
+
+const UNITS: MeasurementUnit[] = ['mm', 'cm', 'inches'];
 
 export function MeasurementApp() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -63,13 +66,36 @@ export function MeasurementApp() {
     applyTheme(theme);
   }, []);
 
+  // `?paper=a4&unit=cm` preselects the sheet and unit, so content pages and
+  // agents can hand people a link that opens the tool already set up.
+  // Applied after hydration rather than in useState so the server render and
+  // the first client render agree.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paper = params.get('paper');
+    const unitParam = params.get('unit');
+    if (paper && paper in PAPER_SIZES) setPaperSize(paper as PaperSize);
+    if (unitParam && UNITS.includes(unitParam as MeasurementUnit)) {
+      setUnit(unitParam as MeasurementUnit);
+    }
+  }, []);
+
+  // The server-rendered English title and description are written for search;
+  // only replace them when the visitor has switched to another language.
+  const serverHead = useRef<{ title: string; description: string } | null>(null);
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    document.title = t('pageTitle');
     const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', t('pageDescription'));
-    }
+    serverHead.current ??= {
+      title: document.title,
+      description: metaDescription?.getAttribute('content') ?? '',
+    };
+    const english = lang === 'en';
+    document.title = english ? serverHead.current.title : t('pageTitle');
+    metaDescription?.setAttribute(
+      'content',
+      english ? serverHead.current.description : t('pageDescription')
+    );
   }, [lang]);
 
   const handleImageLoad = (img: HTMLImageElement) => {

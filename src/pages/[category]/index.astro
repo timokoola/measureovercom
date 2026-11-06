@@ -1,0 +1,78 @@
+---
+import ContentLayout from '../../layouts/ContentLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import {
+  ALL_CATEGORIES,
+  CATEGORY_LABELS,
+  CATEGORY_DESCRIPTIONS,
+  getPagesByCategory,
+  type CategoryName,
+} from '../../data';
+
+export async function getStaticPaths() {
+  // A hub with nothing in it is a thin page; it is not generated until it has
+  // at least one published entry.
+  const paths = [];
+  for (const category of ALL_CATEGORIES) {
+    const pages = await getPagesByCategory(category);
+    if (pages.length > 0) paths.push({ params: { category } });
+  }
+  return paths;
+}
+
+const category = Astro.params.category as CategoryName;
+const label = CATEGORY_LABELS[category];
+const pages = await getPagesByCategory(category);
+
+const HUB_TITLES: Record<CategoryName, string> = {
+  'paper-sizes': 'Paper Sizes in mm, Inches and Pixels — A6 to A0, US',
+  guides: 'Guides — Measuring and Scaling Drawings From Photos',
+  'use-cases': 'Use Cases — Stencils, Patterns and Murals From a Photo',
+  glossary: 'Glossary of Drawing and Measurement Terms',
+};
+
+const site = Astro.site ?? new URL('https://measureover.com');
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: label,
+  description: CATEGORY_DESCRIPTIONS[category],
+  url: new URL(`/${category}/`, site).href,
+  hasPart: pages.map((p) => ({
+    '@type': 'WebPage',
+    name: p.h1,
+    url: new URL(p.canonicalPath, site).href,
+  })),
+};
+---
+
+<ContentLayout
+  title={`${HUB_TITLES[category]} | MeasureOver`}
+  description={`${CATEGORY_DESCRIPTIONS[category]} ${pages.length} ${pages.length === 1 ? 'page' : 'pages'}, each tied to the MeasureOver image measurement tool.`}
+>
+  <script slot="head" type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+  <Breadcrumbs crumbs={[{ name: 'Home', path: '/' }, { name: label, path: `/${category}/` }]} />
+
+  <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mb-4">
+    {label}
+  </h1>
+  <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-10">
+    {CATEGORY_DESCRIPTIONS[category]}
+  </p>
+
+  <ul class="grid gap-4 sm:grid-cols-2">
+    {
+      pages.map((p) => (
+        <li>
+          <a
+            href={p.canonicalPath}
+            class="block h-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-dark-surface p-5 hover:border-burnt-orange transition-colors"
+          >
+            <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{p.h1}</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{p.summary}</p>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</ContentLayout>

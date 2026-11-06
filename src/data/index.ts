@@ -156,7 +156,9 @@ async function loadPage(category: CategoryName, slug: string): Promise<AnyPage |
 
   if (category === 'paper-sizes') {
     if (!PAPER_ORDER.includes(slug as PaperSize)) return null;
-    const overlay = await getEntry('paper-sizes', slug);
+    // Look up through the overlay map: getEntry warns on every sheet that has
+    // no MDX file, and most of them deliberately do not.
+    const overlay = (await paperSizeOverlays()).get(slug);
     const page = buildPaperSizePage(slug as PaperSize, {
       ...overlay?.data,
       body: overlay?.body ?? null,

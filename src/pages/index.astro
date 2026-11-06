@@ -1,32 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 import { MeasurementApp } from '../components/MeasurementApp';
 import { PAPER_SIZES } from '../utils/paperSizes';
-import type { PaperSize } from '../types';
+import { PAPER_LABELS, PAPER_ORDER } from '../data/paperSizes';
 
 const SITE = 'https://measureover.com';
 
 // Built from PAPER_SIZES so the table can never drift from what the tool
-// actually offers — one source of truth, and the pattern the /paper-sizes/
-// pages will reuse.
-const PAPER_LABELS: Record<PaperSize, string> = {
-  a6: 'A6',
-  a5: 'A5',
-  a4: 'A4',
-  a3: 'A3',
-  a2: 'A2',
-  a1: 'A1',
-  a0: 'A0',
-  'us-letter': 'US Letter',
-  'us-legal': 'US Legal',
-  'us-tabloid': 'US Tabloid (Ledger)',
-};
-
-const PAPER_ORDER: PaperSize[] = [
-  'a6', 'a5', 'a4', 'a3', 'a2', 'a1', 'a0',
-  'us-letter', 'us-legal', 'us-tabloid',
-];
-
+// actually offers; the /paper-sizes/ pages share the same labels and order.
 const mmToIn = (mm: number) => (mm / 25.4).toFixed(2);
 const px300 = (mm: number) => Math.round((mm / 25.4) * 300);
 
@@ -125,8 +107,8 @@ const jsonLd = [
 ---
 
 <Layout
-  title="MeasureOver — Scale a Drawing From a Photo"
-  description="Free browser tool for scaling a drawing from a photo. Draw measurement guides over an image and read every intersection in mm, cm or inches against A6–A0, US Letter, Legal or Tabloid. Exports at 300 DPI. Nothing is uploaded."
+  title="Measure on a Photo & Scale It to Paper — MeasureOver"
+  description="Free online tool to measure on an image: draw guide lines over a photo and read every point in mm, cm or inches on A6–A0 or US paper. Prints at 300 DPI. No upload."
 >
   {
     jsonLd.map((block) => (
@@ -239,7 +221,9 @@ const jsonLd = [
                       scope="row"
                       class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap"
                     >
-                      {row.label}
+                      <a href={`/paper-sizes/${row.size}/`} class="hover:text-burnt-orange underline-offset-2 hover:underline">
+                        {row.label}
+                      </a>
                     </th>
                     <td class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap">
                       {row.mm}
@@ -312,12 +296,5 @@ const jsonLd = [
     </div>
   </div>
 
-  <footer
-    class="max-w-3xl mx-auto px-4 md:px-8 mt-20 pt-8 pb-12 border-t border-gray-200 dark:border-gray-800"
-  >
-    <div class="flex flex-col items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
-      <p>Free, client-only measurement tool for scaling drawings from photos.</p>
-      <p class="text-xs">© 2026 Timo Koola. All rights reserved.</p>
-    </div>
-  </footer>
+  <SiteFooter />
 </Layout>

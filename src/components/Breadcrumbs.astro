@@ -1,0 +1,48 @@
+---
+interface Crumb {
+  name: string;
+  path: string;
+}
+
+interface Props {
+  crumbs: Crumb[];
+}
+
+const { crumbs } = Astro.props;
+const site = Astro.site ?? new URL('https://measureover.com');
+
+// Same list drives the visible trail and the BreadcrumbList, so the markup can
+// never describe a trail the page does not show.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: crumbs.map((c, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: c.name,
+    item: new URL(c.path, site).href,
+  })),
+};
+---
+
+<script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+<nav aria-label="Breadcrumb" class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+  <ol class="flex flex-wrap items-center gap-1.5">
+    {
+      crumbs.map((c, i) => (
+        <li class="flex items-center gap-1.5">
+          {i > 0 && <span aria-hidden="true">/</span>}
+          {i === crumbs.length - 1 ? (
+            <span aria-current="page" class="text-gray-900 dark:text-gray-100">
+              {c.name}
+            </span>
+          ) : (
+            <a href={c.path} class="hover:text-burnt-orange">
+              {c.name}
+            </a>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>

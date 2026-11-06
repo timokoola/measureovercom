@@ -1,0 +1,60 @@
+---
+import Layout from './Layout.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { ALL_CATEGORIES, CATEGORY_LABELS } from '../data';
+
+/**
+ * Shell for every page that is not the tool itself. It deliberately does not
+ * embed MeasurementApp: content pages stay script-free and link to the tool
+ * (preconfigured via `?paper=`) instead of hydrating 78 KB on every URL.
+ */
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+}
+
+const { title, description, noindex } = Astro.props;
+const current = Astro.url.pathname.split('/')[1];
+---
+
+<Layout title={title} description={description} noindex={noindex}>
+  <slot name="head" slot="head" />
+  <header class="border-b border-gray-200 dark:border-gray-800">
+    <div class="max-w-5xl mx-auto px-4 md:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
+      <a href="/" class="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+        MeasureOver
+      </a>
+      <nav aria-label="Main" class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+        {
+          ALL_CATEGORIES.map((c) => (
+            <a
+              href={`/${c}/`}
+              aria-current={current === c ? 'page' : undefined}
+              class:list={[
+                'hover:text-burnt-orange',
+                current === c
+                  ? 'text-burnt-orange font-semibold'
+                  : 'text-gray-700 dark:text-gray-300',
+              ]}
+            >
+              {CATEGORY_LABELS[c]}
+            </a>
+          ))
+        }
+        <a
+          href="/"
+          class="rounded-lg bg-burnt-orange hover:bg-burnt-orange-hover text-white font-semibold px-3 py-1.5"
+        >
+          Open the tool
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 md:px-8 pt-10">
+    <slot />
+  </main>
+
+  <SiteFooter />
+</Layout>

@@ -1,0 +1,20 @@
+# Static output has no server to set types, and Pages guesses from the
+# extension: .md is not one it knows, so AGENTS.md would go out as
+# application/octet-stream and download instead of render.
+/AGENTS.md
+  Content-Type: text/markdown; charset=utf-8
+  Access-Control-Allow-Origin: *
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+  Access-Control-Allow-Origin: *
+
+/paper-sizes.json
+  Access-Control-Allow-Origin: *
+
+/.well-known/security.txt
+  Content-Type: text/plain; charset=utf-8
+
+# Point agents that only fetch the homepage at the machine-readable docs.
+/
+  Link: </llms.txt>; rel="alternate"; type="text/plain", </AGENTS.md>; rel="alternate"; type="text/markdown"

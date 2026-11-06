@@ -1,0 +1,6 @@
+# measureover.com is a static site with no server-side code, accounts or
+# stored user data. Reports are still welcome.
+Contact: mailto:timo@skadi.chat
+Expires: 2027-11-06T00:00:00.000Z
+Preferred-Languages: en, fi
+Canonical: https://measureover.com/.well-known/security.txt
